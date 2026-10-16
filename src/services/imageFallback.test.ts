@@ -16,6 +16,12 @@ it('does not load arbitrary third-party Openverse originals automatically', () =
   expect(trustedImageFallback({ ...image, thumbnailUrl:'https://api.openverse.org/v1/thumb', url:'https://random.example/photo.jpg' })).toBeNull()
 })
 
+it('uses only trusted Cleveland museum image hosts for fallbacks', () => {
+  const item = { ...image, thumbnailUrl: 'https://openaccess-cdn.clevelandart.org/a_web.jpg', url: 'https://openaccess-cdn.clevelandart.org/a_print.jpg' }
+  expect(trustedImageFallback(item)).toBe(item.url)
+  expect(trustedImageFallback({ ...item, url: 'https://external.test/a.jpg' })).toBeNull()
+})
+
 it('blocks unsafe and same-url fallbacks', () => {
   expect(trustedImageFallback({ ...image, url:'http://upload.wikimedia.org/a.jpg' })).toBeNull()
   expect(trustedImageFallback({ ...image, url:image.thumbnailUrl })).toBeNull()

@@ -141,7 +141,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? 'Four image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : 'Library of Congress') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? 'Five image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : 'Library of Congress') : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -164,6 +164,7 @@ export default function App() {
               <option value="commons">Wikimedia Commons</option>
               <option value="loc">Library of Congress</option>
               <option value="nasa">NASA Images</option>
+              <option value="cleveland">Cleveland Museum of Art</option>
             </select>
           </div>
           <div className="filter-wrap"><SlidersHorizontal size={16}/>
