@@ -4,7 +4,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search **eight keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, Wikipedia article images, and public-domain Art Institute of Chicago artworks. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Search **seven keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, and Wikipedia article images. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
@@ -111,7 +111,7 @@ Android QA: On Android 10+, downloads now use native MediaStore to save to the p
 
 ## Expanded image discovery (development)
 
-Eight keyless sources now feed **All sources**, including newly supported
+Seven keyless sources now feed **All sources**, including newly supported
 Wikipedia article lead images and public-domain artworks from the Art Institute
 of Chicago. The search input normalizes common technology-name variations such
 as `Samsung OneUI` to `Samsung One UI` when querying providers.
@@ -138,3 +138,12 @@ The native shell permits HTTPS image thumbnails and HTTPS connections to allow
 user-selected web endpoints. Unlike the preexisting keyless source thumbnails,
 web results can load from third-party media domains. See the new provider
 normalization/validation and regression tests under `src/services`.
+
+### Candidate provider held back
+
+The Art Institute of Chicago exposes a documented no-key image collection API.
+Its metadata search returned HTTP 200 during testing, but its IIIF image CDN
+returned HTTP 403 with a Cloudflare challenge to our development environment.
+The adapter prototype in `src/services/artic.ts` is deliberately **not registered**
+as a live search provider; it must not be advertised as functioning or included
+in source counts until real preview requests pass on supported platforms.
