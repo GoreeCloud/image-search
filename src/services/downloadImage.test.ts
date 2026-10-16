@@ -40,6 +40,8 @@ describe('original image downloads', () => {
   it('rejects non-HTTPS and private-network links without fetching them', async () => {
     await expect(downloadOriginalImage({ ...image, url: 'http://example.com/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
     await expect(downloadOriginalImage({ ...image, url: 'https://127.0.0.1/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
+    await expect(downloadOriginalImage({ ...image, url: 'https://[::1]/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
+    await expect(downloadOriginalImage({ ...image, url: 'https://8.8.8.8/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
     expect(fetch).not.toHaveBeenCalled()
   })
 
