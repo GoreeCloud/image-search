@@ -20,7 +20,7 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
       setPexelsKey(keyDraft)
       setConfigured(hasPexelsKey())
       setKeyDraft('')
-      setNotice(hasPexelsKey() ? 'Pexels enabled for this session.' : 'Pexels disabled.')
+      setNotice(hasPexelsKey() ? 'Pexels key configured for this session; search to verify access.' : 'Pexels disabled.')
       onApiChange()
     } catch (reason) {
       setNotice(reason instanceof Error ? reason.message : 'Could not set API key.')
@@ -63,12 +63,12 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
             <p>Browse additional photography with your own Pexels API key.</p>
             <a href="https://www.pexels.com/api/" target="_blank" rel="noopener noreferrer">Get a key from Pexels <ExternalLink size={13}/></a>
           </div>
-          <span className="provider-status">{configured ? 'Connected for this session' : 'Not connected'}</span>
+          <span className="provider-status">{configured ? 'Configured for this session' : 'Not connected'}</span>
         </div>
         <form className="api-form" onSubmit={updateKey}>
           <label htmlFor="pexels-api-key">Pexels API key</label>
           <div className="api-form-fields">
-            <input id="pexels-api-key" type="password" autoComplete="off" spellCheck={false}
+            <input id="pexels-api-key" type="password" autoComplete="off" maxLength={256} spellCheck={false}
               placeholder={configured ? 'Enter a replacement key' : 'Paste your Pexels API key'}
               value={keyDraft} onChange={event => setKeyDraft(event.target.value)}
               aria-describedby="api-privacy"/>

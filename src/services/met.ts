@@ -23,7 +23,7 @@ function trusted(raw: unknown, host: string): string | null {
 }
 
 export function normalizeMet(object: MetObject): ImageResult | null {
-  if (!object.isPublicDomain || !Number.isSafeInteger(object.objectID)) return null
+  if (!object.isPublicDomain || (!Number.isSafeInteger(object.objectID) || (object.objectID ?? 0) <= 0)) return null
   const small = trusted(object.primaryImageSmall, 'images.metmuseum.org')
   const full = trusted(object.primaryImage, 'images.metmuseum.org')
   const sourceUrl = trusted(object.objectURL, 'www.metmuseum.org')
