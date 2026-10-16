@@ -1,3 +1,8 @@
+## Unreleased — broaden keyless art discovery
+
+- Add Cleveland Museum of Art Open Access (CC0 works with image assets) as a fifth no-key provider; filterable independently and included in federated search.
+- Pin thumbnail hosts to the museum’s public media CDN, preserve authoritative artwork links, and enforce CC0 status in response normalization.
+
 ## Unreleased — image discovery and Android layout improvements
 
 - Search NASA Image and Video Library and Library of Congress historical photography collections alongside Openverse and Wikimedia Commons, with All sources selected by default.
