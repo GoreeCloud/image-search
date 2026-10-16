@@ -1,4 +1,5 @@
 import type { ImageResult } from '../types'
+import { invoke, isTauri } from '@tauri-apps/api/core'
 
 const MAX_BYTES = 40 * 1024 * 1024
 const MIME_EXTENSIONS: Record<string, string> = {
@@ -18,6 +19,11 @@ export class ImageDownloadError extends Error {
     super(message)
     this.name = 'ImageDownloadError'
   }
+}
+
+/** WebView blob URLs do not reliably create files on Android. */
+export function isNativeAndroidDownload(): boolean {
+  return isTauri() && typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
 }
 
 /** Never pass provider filenames through to the host filesystem unchanged. */
@@ -80,6 +86,18 @@ async function boundedImageBlob(response: Response, mime: string): Promise<Blob>
  */
 export async function downloadOriginalImage(image: Pick<ImageResult, 'url' | 'title'>): Promise<string> {
   const url = getDownloadUrl(image.url)
+  if (isNativeAndroidDownload()) {
+    try {
+      // The Kotlin command returns only after bytes are committed in Downloads.
+      return await invoke<string>('save_image_android', { url, title: image.title })
+    } catch (error) {
+      throw new ImageDownloadError(
+        typeof error === 'string' && error.length > 0
+          ? error
+          : 'Android could not save this image. Open the original source instead.',
+      )
+    }
+  }
   const controller = new AbortController()
   const timeout = globalThis.setTimeout(() => controller.abort(), 25_000)
   let blob: Blob
