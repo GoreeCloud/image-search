@@ -91,12 +91,13 @@ jobs:
       - run: npm run tauri -- android build --debug --target aarch64
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
-      - name: Verify Android debug APK integrity
+      - name: Verify Android APK identity and signer
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
           test -n "$APK" && test -s "$APK"
-          unzip -tq "$APK"
-          "${ANDROID_HOME}/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'com.goreecloud.imagesearch'
+          AAPT_BIN="${ANDROID_HOME}/build-tools/35.0.0/aapt" \
+            APKSIGNER_BIN="${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
+            bash scripts/verify-android-apk.sh "$APK"
       - uses: actions/upload-artifact@v4
         with:
           name: image-search-android-debug
