@@ -10,6 +10,16 @@ This checklist applies to GoreeCloud Image Search development builds. Passing CI
 4. Exercise offline/retry behavior and failed-preview recovery. Verify AppImage launch, reinstall/upgrade, and rollback.
 5. Record any blocked UI acceptance, WebKit regressions, or incomplete source availability separately.
 
+## Disposable Android QA package safety
+
+Each GitHub Actions Android USB QA run uses a distinct package suffix derived
+from its workflow run ID. This deliberately avoids attempting to update an
+older temporary debug-signed QA APK with a different ephemeral certificate.
+Install the verified per-run QA APK only alongside user apps. Do not uninstall
+or clear a previously installed package without independently confirming that
+its data is disposable. The per-run QA scheme is **not** a substitute for the
+persistent protected Development signing identity required for owner APKs.
+
 ## Android checks
 
 1. Inspect package identity `com.goreecloud.imagesearch`, versionCode, target SDK, supported architecture, APK integrity, and signing-certificate fingerprint. Run `scripts/verify-android-apk.sh /path/to/app.apk`; for a Development release supply the approved `EXPECTED_SIGNER_SHA256` and `PREVIOUS_VERSION_CODE` environment variables so a changed certificate or non-increasing versionCode fails closed. A debug build without these reference values is **not** verified update-compatible.

@@ -1,3 +1,9 @@
+## Unreleased — Android keyboard navigation behavior
+
+- Hide the mobile Explore/Saved bottom navigation while the software keyboard occupies a significant part of the visual viewport, restoring it when the keyboard closes.
+- Use the VisualViewport resize/scroll signals rather than a fixed Android keyboard height; preserve desktop navigation and small toolbar movements.
+- Verify on an isolated USB QA application before release; do not replace an existing signed Android installation or promote Stable solely from CI.
+
 ## Unreleased — broaden keyless art discovery
 
 - Add Cleveland Museum of Art Open Access (CC0 works with image assets) as a fifth no-key provider; filterable independently and included in federated search.
