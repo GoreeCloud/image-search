@@ -6,9 +6,12 @@ import { searchNasa } from './nasa'
 import { searchCma } from './cleveland'
 import { searchMet } from './met'
 import { searchEuropeana } from './europeana'
+import { searchWikipedia } from './wikipedia'
+import { searchArtic } from './artic'
+import { searchWebImages, hasWebImageEndpoint } from './webImages'
 import { hasEuropeanaKey } from './apiKeys'
 
-export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, europeana: searchEuropeana }
+export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, wikipedia: searchWikipedia, artic: searchArtic, europeana: searchEuropeana, web: searchWebImages }
 export type SingleSource = keyof typeof SOURCE_SEARCH
 export type ImageSource = SingleSource | 'all'
 type MultiCursor = Partial<Record<SingleSource, string | null>>
@@ -23,7 +26,8 @@ export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
 }
 
 export async function searchAllSources(query: string, cursor: string | null, signal?: AbortSignal): Promise<SearchPage> {
-  const sources = (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s => s !== 'europeana' || hasEuropeanaKey())
+  const sources = (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s =>
+    (s !== 'europeana' || hasEuropeanaKey()) && (s !== 'web' || hasWebImageEndpoint()))
   let cursors: MultiCursor
   if (cursor === null) cursors = Object.fromEntries(sources.map(s => [s, ''])) as MultiCursor
   else {
