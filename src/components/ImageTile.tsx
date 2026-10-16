@@ -1,4 +1,4 @@
-import { Bookmark, ArrowUpRight, ImageOff, RefreshCw } from 'lucide-react'
+import { Bookmark, ArrowUpRight, Download, ImageOff, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ImageResult } from '../types'
 import { trustedImageFallback } from '../services/imageFallback'
@@ -7,10 +7,13 @@ type Props = {
   item: ImageResult
   onOpen: () => void
   onToggleSaved: () => void
+  onDownload: () => void
+  isDownloading: boolean
+  downloadBusy: boolean
   isSaved: boolean
 }
 
-export function ImageTile({ item, onOpen, onToggleSaved, isSaved }: Props) {
+export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloading, downloadBusy, isSaved }: Props) {
   const [imageUrl, setImageUrl] = useState(item.thumbnailUrl)
   const [failed, setFailed] = useState(false)
   const aspect = Math.min(1.65, Math.max(0.6, item.width / item.height))
@@ -48,6 +51,11 @@ export function ImageTile({ item, onOpen, onToggleSaved, isSaved }: Props) {
       </button>
       {failed && <a className="tile-source" href={item.sourceUrl} target="_blank"
         rel="noopener noreferrer" aria-label={`View source for ${item.title}`}>View source <ArrowUpRight size={12} /></a>}
+      <button type="button" className="tile-download" onClick={onDownload} disabled={downloadBusy}
+        aria-label={isDownloading ? `Downloading ${item.title}` : `Download ${item.title}`}
+        title={isDownloading ? 'Downloading original image' : 'Download original image'}>
+        {isDownloading ? <LoaderCircle size={17} className="download-spinner" /> : <Download size={17} />}
+      </button>
       <button type="button" className={`tile-save ${isSaved ? 'is-saved' : ''}`}
         onClick={onToggleSaved} aria-label={isSaved ? `Remove ${item.title} from saved` : `Save image`}
         title={isSaved ? 'Remove from saved' : 'Save image'}>
