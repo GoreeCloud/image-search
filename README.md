@@ -4,7 +4,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search **seven keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, and Wikipedia article images. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Search **seven keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, plus Wikipedia article images. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
@@ -112,8 +112,7 @@ Android QA: On Android 10+, downloads now use native MediaStore to save to the p
 ## Expanded image discovery (development)
 
 Seven keyless sources now feed **All sources**, including newly supported
-Wikipedia article lead images and public-domain artworks from the Art Institute
-of Chicago. The search input normalizes common technology-name variations such
+Wikipedia article lead images. The search input normalizes common technology-name variations such
 as `Samsung OneUI` to `Samsung One UI` when querying providers.
 
 **Optional broader web search:** Settings → API → Broader Web Images accepts a
