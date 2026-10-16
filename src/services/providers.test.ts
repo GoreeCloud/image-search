@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { uniqueImages, searchAllSources } from './providers'
 import { searchOpenverse } from './openverse'
 import { searchCommons } from './commons'
@@ -9,7 +9,7 @@ import { searchMet } from './met'
 import { searchEuropeana } from './europeana'
 import { searchWikipedia } from './wikipedia'
 import { searchArtic } from './artic'
-import { setWebImageEndpoint } from './webImages'
+import { searchWebImages } from './webImages'
 import { setEuropeanaKey } from './apiKeys'
 
 vi.mock('./openverse', () => ({ searchOpenverse: vi.fn() }))
@@ -21,8 +21,9 @@ vi.mock('./met', () => ({ searchMet: vi.fn() }))
 vi.mock('./europeana', () => ({ searchEuropeana: vi.fn() }))
 vi.mock('./wikipedia', () => ({ searchWikipedia: vi.fn() }))
 vi.mock('./artic', () => ({ searchArtic: vi.fn() }))
-vi.mock('./webImages', () => ({ searchWebImages: vi.fn(), hasWebImageEndpoint: vi.fn(() => false), setWebImageEndpoint: vi.fn() }))
-afterEach(() => { vi.clearAllMocks(); setEuropeanaKey(''); setWebImageEndpoint('') })
+vi.mock('./webImages', () => ({ searchWebImages: vi.fn() }))
+beforeEach(() => { vi.mocked(searchWebImages).mockResolvedValue({ items: [], cursor: null }) })
+afterEach(() => { vi.clearAllMocks(); setEuropeanaKey('') })
 const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thumbnailUrl:'https://example.com/a.jpg',sourceUrl:'https://example.com',description:'',creator:'x',license:'x',licenseUrl:null,width:4,height:3,provider:'test'}
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
@@ -43,7 +44,7 @@ it('collects available providers when another provider fails', async () => {
   expect(page.cursor).toContain('commons')
 })
 it('handles every provider failing', async () => {
-  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet, searchWikipedia, searchArtic]) vi.mocked(mock).mockRejectedValue(new Error('down'))
+  for (const mock of [searchWebImages, searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet, searchWikipedia, searchArtic]) vi.mocked(mock).mockRejectedValue(new Error('down'))
   await expect(searchAllSources('nature',null)).rejects.toThrow('temporarily unavailable')
 })
 
@@ -64,4 +65,22 @@ it('shows screenshot-rich sources first for technology searches', async () => {
   for (const mock of [searchLoC, searchNasa, searchCma, searchMet]) vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
   const result=await searchAllSources('Samsung One UI',null)
   expect(result.items.map(x=>x.id).slice(0,3)).toEqual(['commons','wikipedia','open'])
+})
+
+it('queries GoreeCloud Search by default and prioritizes its image results', async () => {
+  vi.mocked(searchWebImages).mockResolvedValue({items:[{...image,id:'web',url:'https://example.com/goreecloud.jpg'}],cursor:null})
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet, searchWikipedia]) vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  const page = await searchAllSources('Samsung One UI', null)
+  expect(searchWebImages).toHaveBeenCalledWith('Samsung One UI', null, undefined)
+  expect(page.items[0].id).toBe('web')
+})
+
+it('keeps curated results and marks the web source unavailable if its service is offline', async () => {
+  vi.mocked(searchWebImages).mockRejectedValue(new Error('backend unavailable'))
+  vi.mocked(searchCommons).mockResolvedValue({items:[image],cursor:null})
+  for (const mock of [searchOpenverse, searchLoC, searchNasa, searchCma, searchMet, searchWikipedia]) vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  const page=await searchAllSources('Samsung One UI',null)
+  expect(page.items).toEqual([image])
+  expect(page.unavailableSources).toContain('web')
+  expect(page.cursor).toBeNull()
 })
