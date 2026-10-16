@@ -1,3 +1,9 @@
+## Unreleased — broader image search
+
+- Add Wikipedia article images and Art Institute of Chicago public-domain artwork images.
+- Add optional SearXNG web image results using a user-controlled HTTPS endpoint.
+- Normalize Samsung OneUI spelling, prioritize web results, and test input validation.
+
 ## Unreleased — original image download action
 
 - Add Download image to masonry results and image previews. Keep Save as a separate local-bookmark action.
