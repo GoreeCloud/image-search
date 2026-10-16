@@ -6,8 +6,8 @@ import { searchLoC } from './loc'
 import { searchNasa } from './nasa'
 import { searchCma } from './cleveland'
 import { searchMet } from './met'
-import { searchPexels } from './pexels'
-import { setPexelsKey } from './apiKeys'
+import { searchEuropeana } from './europeana'
+import { setEuropeanaKey } from './apiKeys'
 
 vi.mock('./openverse', () => ({ searchOpenverse: vi.fn() }))
 vi.mock('./commons', () => ({ searchCommons: vi.fn() }))
@@ -15,8 +15,8 @@ vi.mock('./loc', () => ({ searchLoC: vi.fn() }))
 vi.mock('./nasa', () => ({ searchNasa: vi.fn() }))
 vi.mock('./cleveland', () => ({ searchCma: vi.fn() }))
 vi.mock('./met', () => ({ searchMet: vi.fn() }))
-vi.mock('./pexels', () => ({ searchPexels: vi.fn() }))
-afterEach(() => { vi.clearAllMocks(); setPexelsKey('') })
+vi.mock('./europeana', () => ({ searchEuropeana: vi.fn() }))
+afterEach(() => { vi.clearAllMocks(); setEuropeanaKey('') })
 const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thumbnailUrl:'https://example.com/a.jpg',sourceUrl:'https://example.com',description:'',creator:'x',license:'x',licenseUrl:null,width:4,height:3,provider:'test'}
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
@@ -38,12 +38,12 @@ it('handles every provider failing', async () => {
   await expect(searchAllSources('nature',null)).rejects.toThrow('temporarily unavailable')
 })
 
-it('includes optional Pexels only when a session key is configured', async () => {
+it('includes optional Europeana only when a session key is configured', async () => {
   for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
-  vi.mocked(searchPexels).mockResolvedValue({items:[{...image,id:'pexels'}],cursor:null})
+  vi.mocked(searchEuropeana).mockResolvedValue({items:[{...image,id:'europeana'}],cursor:null})
   await searchAllSources('flowers',null)
-  expect(searchPexels).not.toHaveBeenCalled()
-  setPexelsKey('sample-client-key')
+  expect(searchEuropeana).not.toHaveBeenCalled()
+  setEuropeanaKey('sample-client-key')
   const after=await searchAllSources('flowers',null)
-  expect(after.items.map(item=>item.id)).toContain('pexels')
+  expect(after.items.map(item=>item.id)).toContain('europeana')
 })

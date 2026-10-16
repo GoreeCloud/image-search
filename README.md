@@ -88,17 +88,18 @@ On mobile, **Settings** sits beside Explore and Saved in the bottom dock; on
 desktop it is in the main navigation. Settings > **Appearance** lets you choose
 Dark or Light Mode. Only the theme preference is stored locally.
 
-**Settings > API** supports optional Pexels photographs with a user-provided
-Pexels API key. Pexels needs its own API authorization and is not queried
-without a key. See https://www.pexels.com/api/documentation/. Connected Pexels
-results join All sources, or select Pexels from the source filter.
+**Settings > API** supports optional Europeana cultural heritage imagery with a user-provided
+Europeana API key. Europeana needs its own API authorization and is not queried
+without a key. See https://europeana.atlassian.net/wiki/spaces/EF/pages/2462351393/Accessing+the+APIs. Connected Europeana
+results join All sources, or select Europeana from the source filter.
 
-**Key security:** the Pexels key is held only in this session's JavaScript
-memory and sent as an HTTPS Authorization header directly to api.pexels.com,
+**Key security:** the Europeana key is held only in this session's JavaScript
+memory and sent as an HTTPS X-Api-Key header directly to api.europeana.eu,
 never put into image URLs, committed to GitHub, or persisted in localStorage.
 Reloading or closing the app clears it. Do not enter server-side confidential
 credentials in a browser/client application. No provider account is created
-for the user. Provider-specific usage rights, quotas and attribution still apply.
+for the user. Europeana personal keys are for individual exploration; service
+usage requires a Europeana project key and compliance with its access terms. Provider-specific usage rights, quotas and attribution still apply.
 
 The Met API uses https://collectionapi.metmuseum.org/public/collection/v1.1/search
 (paginated; the older v1 search endpoint was deprecated in October 2026).

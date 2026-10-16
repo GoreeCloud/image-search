@@ -4,7 +4,7 @@ import { ImageTile } from './components/ImageTile'
 import { ImageDetail } from './components/ImageDetail'
 import { SettingsPage } from './components/SettingsPage'
 import { useThemeMode } from './hooks/useThemeMode'
-import { hasPexelsKey } from './services/apiKeys'
+import { hasEuropeanaKey } from './services/apiKeys'
 import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
@@ -97,7 +97,7 @@ export default function App() {
   }
 
   function onApiChange() {
-    if (source === 'pexels' && !hasPexelsKey()) setSource('all')
+    if (source === 'europeana' && !hasEuropeanaKey()) setSource('all')
     setRefresh(n => n + 1)
   }
 
@@ -155,7 +155,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? hasPexelsKey() ? 'Seven image collections' : 'Six image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'pexels' ? 'Pexels Photos' : 'Library of Congress') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? hasEuropeanaKey() ? 'Seven image collections' : 'Six image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'europeana' ? 'Europeana' : 'Library of Congress') : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -180,7 +180,7 @@ export default function App() {
               <option value="nasa">NASA Images</option>
               <option value="cleveland">Cleveland Museum of Art</option>
               <option value="met">The Metropolitan Museum of Art</option>
-              <option value="pexels">Pexels (API key)</option>
+              <option value="europeana">Europeana (API key)</option>
             </select>
           </div>
           <div className="filter-wrap"><SlidersHorizontal size={16}/>

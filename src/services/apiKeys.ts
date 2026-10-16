@@ -1,11 +1,11 @@
 // Deliberately volatile: keys never enter localStorage, URLs, logs, or source.
-let pexelsKey = ''
+let europeanaKey = ''
 
-export function setPexelsKey(key: string): void {
+export function setEuropeanaKey(key: string): void {
   const clean = key.trim()
   if (clean.length > 256) throw new Error('API key is too long')
-  pexelsKey = clean
+  europeanaKey = clean
 }
 
-export function getPexelsKey(): string { return pexelsKey }
-export function hasPexelsKey(): boolean { return pexelsKey.length > 0 }
+export function getEuropeanaKey(): string { return europeanaKey }
+export function hasEuropeanaKey(): boolean { return europeanaKey.length > 0 }

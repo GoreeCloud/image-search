@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { KeyRound, LockKeyhole, Moon, Sun, Unplug, ExternalLink } from 'lucide-react'
-import { hasPexelsKey, setPexelsKey } from '../services/apiKeys'
+import { hasEuropeanaKey, setEuropeanaKey } from '../services/apiKeys'
 import type { ThemeMode } from '../hooks/useThemeMode'
 
 type Props = {
@@ -11,16 +11,16 @@ type Props = {
 
 export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
   const [keyDraft, setKeyDraft] = useState('')
-  const [configured, setConfigured] = useState(hasPexelsKey())
+  const [configured, setConfigured] = useState(hasEuropeanaKey())
   const [notice, setNotice] = useState('')
 
   function updateKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     try {
-      setPexelsKey(keyDraft)
-      setConfigured(hasPexelsKey())
+      setEuropeanaKey(keyDraft)
+      setConfigured(hasEuropeanaKey())
       setKeyDraft('')
-      setNotice(hasPexelsKey() ? 'Pexels key configured for this session; search to verify access.' : 'Pexels disabled.')
+      setNotice(hasEuropeanaKey() ? 'Europeana key configured for this session; search to verify access.' : 'Europeana disabled.')
       onApiChange()
     } catch (reason) {
       setNotice(reason instanceof Error ? reason.message : 'Could not set API key.')
@@ -28,10 +28,10 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
   }
 
   function disconnect() {
-    setPexelsKey('')
+    setEuropeanaKey('')
     setKeyDraft('')
     setConfigured(false)
-    setNotice('Pexels disconnected from this session.')
+    setNotice('Europeana disconnected from this session.')
     onApiChange()
   }
 
@@ -59,17 +59,17 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
         </div>
         <div className="provider-row">
           <div>
-            <strong>Pexels Photos</strong>
-            <p>Browse additional photography with your own Pexels API key.</p>
-            <a href="https://www.pexels.com/api/" target="_blank" rel="noopener noreferrer">Get a key from Pexels <ExternalLink size={13}/></a>
+            <strong>Europeana Heritage</strong>
+            <p>Search European cultural heritage imagery with your own Europeana API key.</p>
+            <a href="https://www.europeana.eu/en/how-to-register-for-and-manage-an-api-key" target="_blank" rel="noopener noreferrer">Get a key from Europeana <ExternalLink size={13}/></a>
           </div>
           <span className="provider-status">{configured ? 'Configured for this session' : 'Not connected'}</span>
         </div>
         <form className="api-form" onSubmit={updateKey}>
-          <label htmlFor="pexels-api-key">Pexels API key</label>
+          <label htmlFor="europeana-api-key">Europeana API key</label>
           <div className="api-form-fields">
-            <input id="pexels-api-key" type="password" autoComplete="off" maxLength={256} spellCheck={false}
-              placeholder={configured ? 'Enter a replacement key' : 'Paste your Pexels API key'}
+            <input id="europeana-api-key" type="password" autoComplete="off" maxLength={256} spellCheck={false}
+              placeholder={configured ? 'Enter a replacement key' : 'Paste your Europeana API key'}
               value={keyDraft} onChange={event => setKeyDraft(event.target.value)}
               aria-describedby="api-privacy"/>
             <button type="submit" disabled={!keyDraft.trim()}>Connect</button>
@@ -77,7 +77,7 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
           </div>
         </form>
         {notice && <p role="status" className="api-notice">{notice}</p>}
-        <p className="api-privacy" id="api-privacy"><LockKeyhole size={15}/> Keys stay in this app session's memory and are not saved to disk or included in image URLs. The key is sent only to the chosen provider. Closing or reloading the app clears it. Use a provider-issued key intended for client applications; never paste private server secrets.</p>
+        <p className="api-privacy" id="api-privacy"><LockKeyhole size={15}/> Keys stay in this app session's memory and are not saved to disk or included in image URLs. The key is sent only to the chosen provider as an X-Api-Key header. Use a personal key only for personal exploration; services require provider-approved project keys. Closing or reloading the app clears it. Use a provider-issued key intended for client applications; never paste private server secrets.</p>
         <p className="api-privacy">Connected providers are included in “All sources.” If a provider fails or reaches its API limit, the other sources remain usable.</p>
       </section>
     </section>
