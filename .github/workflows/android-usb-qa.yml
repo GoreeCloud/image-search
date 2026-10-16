@@ -1,0 +1,61 @@
+name: Android Side-by-Side QA
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  android_qa:
+    if: startsWith(github.head_ref, 'qa/')
+    name: Isolated USB QA APK
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0" "ndk;27.0.12077973"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Generate isolated Android package
+        run: npm run tauri -- android init --config src-tauri/tauri.qa.conf.json --ci
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+      - name: Apply inset handling under QA package
+        run: |
+          bash scripts/prepare-android.sh
+          ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt -print -quit)
+          test -n "$ACTIVITY"
+          sed -i 's/^package com\.goreecloud\.imagesearch$/package com.goreecloud.imagesearch.qa/' "$ACTIVITY"
+          grep -F 'package com.goreecloud.imagesearch.qa' "$ACTIVITY"
+      - name: Build QA APK
+        run: npm run tauri -- android build --debug --target aarch64 --config src-tauri/tauri.qa.conf.json --ci
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+      - name: Verify QA package and certificate
+        run: |
+          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$APK" && test -s "$APK"
+          EXPECTED_PACKAGE=com.goreecloud.imagesearch.qa \
+            AAPT_BIN="${ANDROID_HOME}/build-tools/35.0.0/aapt" \
+            APKSIGNER_BIN="${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
+            bash scripts/verify-android-apk.sh "$APK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-search-usb-qa-debug
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
