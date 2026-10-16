@@ -207,3 +207,18 @@ h1 em { font-style: normal; color: #bfafff; }
 .brand-mark { background: none; box-shadow: none; overflow: hidden; }
 .brand-mark img { width: 100%; height: 100%; display: block; border-radius: inherit; }
 .preview-failed { max-width: 290px; padding: 22px; text-align: center; color: #c5bfd5; font-size: 13px; line-height: 1.5; }
+
+/* Persistent copyright caution: always visible while scrolling, including touch.
+   The glyph is advisory; exact rights belong to the original source. */
+.tile-copyright, .preview-copyright {
+  position: absolute; display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; background: #111218d9; border: 1px solid #ffffff65;
+  border-radius: 9px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  z-index: 4; pointer-events: none; box-shadow: 0 2px 12px #0006;
+}
+.tile-copyright { width: 30px; height: 30px; right: 10px; bottom: 10px; }
+.preview-copyright { width: 38px; height: 38px; right: 20px; bottom: 18px; }
+.tile-info { right: 49px; }
+@media (prefers-reduced-motion: reduce) {
+  .tile-copyright, .preview-copyright { transition: none; }
+}
