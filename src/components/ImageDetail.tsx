@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, ExternalLink, X } from 'lucide-react'
 import type { ImageResult } from '../types'
+import { trustedImageFallback } from '../services/imageFallback'
 
 type Props = {
   image: ImageResult
@@ -15,6 +16,19 @@ type Props = {
 export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onToggleSaved, onCopy }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const [previewUrl, setPreviewUrl] = useState(image.thumbnailUrl)
+  const [previewFailed, setPreviewFailed] = useState(false)
+
+  useEffect(() => {
+    setPreviewUrl(image.thumbnailUrl)
+    setPreviewFailed(false)
+  }, [image.id, image.thumbnailUrl])
+
+  function onPreviewError() {
+    const alternative = trustedImageFallback(image)
+    if (previewUrl === image.thumbnailUrl && alternative) setPreviewUrl(alternative)
+    else setPreviewFailed(true)
+  }
 
   useEffect(() => {
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -59,7 +73,9 @@ export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onTog
         <div className="lightbox-main">
           <div className="preview-area">
             <button type="button" className="preview-arrow left" onClick={onPrevious} aria-label="Previous image"><ChevronLeft size={23}/></button>
-            <img src={image.thumbnailUrl} alt={image.title} />
+            {previewFailed
+              ? <div className="preview-failed" role="status">Image preview unavailable. Use the original source link for this image.</div>
+              : <img src={previewUrl} alt={image.title} referrerPolicy="no-referrer" onError={onPreviewError} />}
             <button type="button" className="preview-arrow right" onClick={onNext} aria-label="Next image"><ChevronRight size={23}/></button>
           </div>
           <aside className="detail-panel">

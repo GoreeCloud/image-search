@@ -4,7 +4,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search openly licensed imagery across multiple websites through Openverse, or switch to Wikimedia Commons. No API key required at the supported anonymous request limits.
+- Search **four distinct image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Save / unsave images locally on-device. Copy original links, inspect creator, resolution and license.
@@ -12,8 +12,10 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
+- Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
+- Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
-**Scope:** Openverse indexes openly licensed media from multiple websites. Wikimedia Commons is also available. Neither source is a general-purpose unrestricted web crawler. Both APIs have rate/usage limitations. Search queries go to the selected provider; previews are fetched from the Openverse thumbnail endpoint or Wikimedia CDN. Saved images contain URL/metadata, not offline image binaries.
+**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs and cataloged imagery with item-specific reuse rights. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
 
 ## Requirements
 
@@ -46,21 +48,25 @@ The Linux job in GitHub Actions builds DEB and AppImage artifacts after the nece
 
 ```bash
 npm run tauri -- android init
+bash scripts/prepare-android.sh   # apply version-controlled Android window-inset handler
 npm run tauri -- android dev
 npm run tauri -- android build --debug --target aarch64
 ```
 
-Android requires SDK + NDK + a connected emulator/device for actual runtime tests. The manual GitHub Actions job makes a temporary debug package solely for bounded testing. **It is not a GoreeCloud Development distribution APK**; persistent protected signing identity, monotonically increasing Android versionCode, install/upgrade tests, and Drive delivery must be completed before a development APK is offered to the owner.
+Android requires SDK + NDK + a connected emulator/device for actual runtime tests. The GitHub Actions job produces a temporary debug package solely for bounded testing. **It is not a GoreeCloud Development distribution APK**; persistent protected signing identity, monotonically increasing Android versionCode, install/upgrade tests, and Drive delivery must be completed before a development APK is offered to the owner.
 
 ## Search provider and image rights
 
-The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply) or `https://commons.wikimedia.org/w/api.php` with `origin=*`. Openverse previews are proxied by Openverse; Commons thumbnails are served from trusted Wikimedia hosts. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
+The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply), `https://commons.wikimedia.org/w/api.php` with `origin=*`, `https://images-api.nasa.gov/search`, and `https://www.loc.gov/photos/?fo=json`. Previews come from provider-controlled hosts, not through our infrastructure. Openverse third-party originals are not fetched automatically as thumbnail fallbacks. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
 
 No API keys are embedded in client code. Future commercial search providers should use a separate secured proxy with appropriate quotas, caching, licensing and terms compliance.
 
 ## Architecture
 
-- `src/services/openverse.ts` and `src/services/commons.ts`: open-license image provider APIs, response normalization, URL trust boundaries and pagination.
+- `src/services/openverse.ts`, `commons.ts`, `nasa.ts`, `loc.ts`: source-specific API adapters, response normalization, URL trust boundaries and pagination.
+- `src/services/providers.ts`: parallel federated search with partial-failure tolerance and stable result deduplication.
+- `src/services/imageFallback.ts`: same-provider trusted preview recovery.
+- `src-tauri/android/MainActivity.kt`: Android native safe-area application; `scripts/prepare-android.sh` installs it into generated Gradle sources.
 - `src/hooks`: image search request lifecycle and local saved state, with separate first-page and load-more error handling.
 - `src/services/network.ts`: cancellable HTTP timeout helper shared by image providers.
 - `src/components`: masonry tiles and lightbox.

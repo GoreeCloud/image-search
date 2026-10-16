@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: https://upload.wikimedia.org https://thumb.wikimedia.org https://api.openverse.org; connect-src ipc: http://ipc.localhost https://commons.wikimedia.org https://api.openverse.org; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none' "
+      "csp": "default-src 'self'; img-src 'self' data: https://upload.wikimedia.org https://thumb.wikimedia.org https://api.openverse.org https://images-assets.nasa.gov https://tile.loc.gov https://cdn.loc.gov; connect-src ipc: http://ipc.localhost https://commons.wikimedia.org https://api.openverse.org https://images-api.nasa.gov https://www.loc.gov; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none' "
     }
   },
   "bundle": {
