@@ -1,4 +1,5 @@
 import type { ImageResult, SearchPage } from '../types'
+import { fetchWithTimeout } from './network'
 
 const API = 'https://commons.wikimedia.org/w/api.php'
 const TRUSTED_IMAGE_HOSTS = ['upload.wikimedia.org', 'thumb.wikimedia.org']
@@ -35,6 +36,14 @@ export function isSafeHttpsUrl(value: unknown, host: string): value is string {
   }
 }
 
+function validLicenseUrl(value?: string): string | null {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' ? url.href : null
+  } catch { return null }
+}
+
 function plainText(value?: string): string {
   if (!value) return ''
   // Metadata is text, never injected as markup into the document.
@@ -58,8 +67,7 @@ export function normalizePage(page: CommonsPage): ImageResult | null {
   const description = plainText(metadata.ImageDescription?.value)
   const creator = plainText(metadata.Artist?.value) || 'Creator not specified'
   const license = plainText(metadata.LicenseShortName?.value) || 'See source for terms'
-  const licenseUrl = isSafeHttpsUrl(metadata.LicenseUrl?.value, new URL(metadata.LicenseUrl?.value || 'https://commons.wikimedia.org').hostname)
-    ? metadata.LicenseUrl!.value! : null
+  const licenseUrl = validLicenseUrl(metadata.LicenseUrl?.value)
 
   return {
     id: `commons:${page.pageid}`,
@@ -110,11 +118,7 @@ export async function searchCommons(
     if (typeof continuation.gsroffset === 'number') params.set('gsroffset', String(continuation.gsroffset))
   }
 
-  const response = await fetch(`${API}?${params.toString()}`, {
-    method: 'GET',
-    signal,
-    headers: { Accept: 'application/json' },
-  })
+  const response = await fetchWithTimeout(`${API}?${params.toString()}`, signal)
   if (!response.ok) {
     if (response.status === 429) throw new Error('Image source is busy. Please try again shortly.')
     throw new Error(`Image search unavailable (HTTP ${response.status}).`)
