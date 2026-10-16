@@ -9,7 +9,7 @@ import { searchMet } from './met'
 import { searchEuropeana } from './europeana'
 import { searchWikipedia } from './wikipedia'
 import { searchArtic } from './artic'
-import { searchWebImages, setWebImageEndpoint } from './webImages'
+import { setWebImageEndpoint } from './webImages'
 import { setEuropeanaKey } from './apiKeys'
 
 vi.mock('./openverse', () => ({ searchOpenverse: vi.fn() }))
