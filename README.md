@@ -8,7 +8,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Save / unsave images locally on-device. Copy original links, inspect creator, resolution and license.
-- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, reduced-motion support and touch-friendly layouts.
+- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.

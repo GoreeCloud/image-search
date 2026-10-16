@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, ExternalLink, X } from 'lucide-react'
 import type { ImageResult } from '../types'
 
@@ -13,24 +13,48 @@ type Props = {
 }
 
 export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onToggleSaved, onCopy }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    closeRef.current?.focus()
+    return () => { if (previouslyFocused?.isConnected) previouslyFocused.focus() }
+  }, [])
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
       if (event.key === 'ArrowRight') onNext()
       if (event.key === 'ArrowLeft') onPrevious()
+      if (event.key === 'Tab' && dialogRef.current) {
+        const controls = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'))
+          .filter((element) => element.getClientRects().length > 0)
+        if (!controls.length) { event.preventDefault(); return }
+        const first = controls[0]
+        const last = controls[controls.length - 1]
+        if (event.shiftKey && (document.activeElement === first || !dialogRef.current.contains(document.activeElement))) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current.contains(document.activeElement))) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
+    const priorOverflow = document.body.style.overflow
     document.addEventListener('keydown', onKeyDown)
     document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', onKeyDown); document.body.style.overflow = '' }
+    return () => { document.removeEventListener('keydown', onKeyDown); document.body.style.overflow = priorOverflow }
   }, [onClose, onNext, onPrevious])
 
   return (
     <div className="lightbox" role="dialog" aria-modal="true" aria-label={`Image details: ${image.title}`}>
       <button className="lightbox-backdrop" type="button" onClick={onClose} aria-label="Close image preview" />
-      <div className="lightbox-shell">
+      <div className="lightbox-shell" ref={dialogRef}>
         <div className="lightbox-top">
           <span className="lightbox-brand"><span className="brand-dot" /> IMAGE PREVIEW</span>
-          <button className="icon-button lightbox-close" onClick={onClose} type="button" aria-label="Close preview"><X size={21} /></button>
+          <button className="icon-button lightbox-close" ref={closeRef} onClick={onClose} type="button" aria-label="Close preview"><X size={21} /></button>
         </div>
         <div className="lightbox-main">
           <div className="preview-area">
@@ -41,7 +65,7 @@ export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onTog
           <aside className="detail-panel">
             <div className="detail-eyebrow"><span className="detail-dot" /> {image.provider}</div>
             <h2>{image.title}</h2>
-            <p className="detail-description">{image.description || 'Explore this image and its source information on Wikimedia Commons.'}</p>
+            <p className="detail-description">{image.description || 'View source details and licensing information for this image.'}</p>
             <div className="detail-actions">
               <button type="button" className={`detail-save ${isSaved ? 'active' : ''}`} onClick={onToggleSaved}>
                 <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
