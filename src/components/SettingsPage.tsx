@@ -1,7 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { KeyRound, LockKeyhole, Moon, Sun, Unplug, ExternalLink } from 'lucide-react'
 import { hasEuropeanaKey, setEuropeanaKey } from '../services/apiKeys'
-import { getWebImageEndpoint, hasWebImageEndpoint, setWebImageEndpoint } from '../services/webImages'
 import type { ThemeMode } from '../hooks/useThemeMode'
 
 type Props = {
@@ -14,9 +13,6 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
   const [keyDraft, setKeyDraft] = useState('')
   const [configured, setConfigured] = useState(hasEuropeanaKey())
   const [notice, setNotice] = useState('')
-  const [webDraft, setWebDraft] = useState('')
-  const [webConfigured, setWebConfigured] = useState(hasWebImageEndpoint())
-  const [webNotice, setWebNotice] = useState('')
 
   function updateKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -39,25 +35,6 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
     onApiChange()
   }
 
-  function connectWebImages(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    try {
-      setWebImageEndpoint(webDraft)
-      setWebConfigured(hasWebImageEndpoint())
-      setWebDraft('')
-      setWebNotice('Web images connected for this session. Search to verify provider availability.')
-      onApiChange()
-    } catch (error) {
-      setWebNotice(error instanceof Error ? error.message : 'Could not connect the web image service.')
-    }
-  }
-  function disconnectWebImages() {
-    setWebImageEndpoint('')
-    setWebConfigured(false)
-    setWebDraft('')
-    setWebNotice('Web images disconnected from this session.')
-    onApiChange()
-  }
 
   return (
     <section className="settings-page" aria-label="Image Search settings">
@@ -79,7 +56,7 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
       <section className="settings-card" id="api-settings" aria-labelledby="api-heading">
         <div className="settings-card-heading">
           <h2 id="api-heading"><KeyRound size={19}/> API</h2>
-          <p>Connect optional image services. Free public collections work without keys.</p>
+          <p>GoreeCloud Search images are built in. Optional heritage providers can be connected separately.</p>
         </div>
         <div className="provider-row">
           <div>
@@ -104,24 +81,12 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
         <p className="api-privacy" id="api-privacy"><LockKeyhole size={15}/> Keys stay in this app session's memory and are not saved to disk or included in image URLs. The key is sent only to the chosen provider as an X-Api-Key header. Use a personal key only for personal exploration; services require provider-approved project keys. Closing or reloading the app clears it. Use a provider-issued key intended for client applications; never paste private server secrets.</p>
         <div className="provider-row">
           <div>
-            <strong>Broader Web Images (SearXNG)</strong>
-            <p>Connect a trusted HTTPS SearXNG instance with JSON image search and CORS enabled. It can aggregate several general-purpose image engines for searches such as Samsung One UI.</p>
-            <a href="https://docs.searxng.org/dev/search_api.html" target="_blank" rel="noopener noreferrer">SearXNG API documentation <ExternalLink size={13}/></a>
+            <strong>GoreeCloud Search · General-web images</strong>
+            <p>Built into Image Search and included in every All sources search. Powered by GoreeCloud's SearXNG-based search backend; no third-party server address or personal API key is required. Coverage depends on the GoreeCloud Search service and its available image engines.</p>
           </div>
-          <span className="provider-status">{webConfigured ? 'Connected for this session' : 'Not connected'}</span>
+          <span className="provider-status">Enabled by default</span>
         </div>
-        <form className="api-form" onSubmit={connectWebImages}>
-          <label htmlFor="web-image-endpoint">SearXNG HTTPS address</label>
-          <div className="api-form-fields">
-            <input id="web-image-endpoint" type="url" autoComplete="off" spellCheck={false} maxLength={300}
-              placeholder={webConfigured ? getWebImageEndpoint() : 'https://search.example.org'}
-              value={webDraft} onChange={event => setWebDraft(event.target.value)} />
-            <button type="submit" disabled={!webDraft.trim()}>Connect</button>
-            {webConfigured && <button type="button" className="disconnect" onClick={disconnectWebImages}><Unplug size={16}/> Remove</button>}
-          </div>
-        </form>
-        {webNotice && <p role="status" className="api-notice">{webNotice}</p>}
-        <p className="api-privacy"><LockKeyhole size={15}/> This optional connection runs only when enabled, is never saved, and shares searches with your chosen SearXNG instance. Web results may load thumbnails from third-party sites, and usage rights vary. Use a trusted instance with browser CORS and JSON image results enabled; other image collections remain available without this connection.</p>
+        <p className="api-privacy"><LockKeyhole size={15}/> Search terms are sent to the first-party GoreeCloud Search endpoint when available. Image thumbnails can load from their originating websites. Copyright restrictions may apply; the image grid displays a copyright caution for images without verified public-domain rights. If GoreeCloud Search is unavailable, the free image collections still work.</p>
         <p className="api-privacy">Connected providers are included in “All sources.” If a provider fails or reaches its API limit, the other sources remain usable.</p>
       </section>
     </section>
