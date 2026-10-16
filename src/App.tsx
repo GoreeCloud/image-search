@@ -4,6 +4,7 @@ import { ImageTile } from './components/ImageTile'
 import { ImageDetail } from './components/ImageDetail'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
+import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard'
 import type { ImageSource } from './services/providers'
 import type { ImageResult } from './types'
 
@@ -34,6 +35,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null)
   const [refresh, setRefresh] = useState(0)
   const [source, setSource] = useState<ImageSource>('all')
+  const keyboardOpen = useSoftwareKeyboard()
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
@@ -113,7 +115,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={keyboardOpen ? "app-shell ime-open" : "app-shell"}>
       <header className="topbar">
         <div className="topbar-inner">
           <button type="button" className="brand" onClick={() => { setView('explore'); setOrientation('all') }} aria-label="Image Search home">

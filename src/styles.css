@@ -152,6 +152,8 @@ h1 em { font-style: normal; color: #bfafff; }
   .mobile-nav { display: flex; z-index: 50; position: fixed; bottom: 0; left: 0; right: 0; justify-content: space-around; border-top: 1px solid #34303d; padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px)); background: #17151cf7; backdrop-filter: blur(20px); }
   .mobile-nav button { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 45%; padding: 5px; background: none; border: 0; color: #898492; font-size: 10px; font-weight: 620; }
   .mobile-nav button.selected { color: #c3b4ff; }
+  .ime-open .mobile-nav { display: none; }
+  .ime-open .toast { bottom: auto; top: 143px; }
   .lightbox { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
   .lightbox-shell { width: 100%; height: 100%; max-height: none; border: 0; border-radius: 0; }
   .lightbox-top { min-height: 56px; padding: 10px 16px; }
