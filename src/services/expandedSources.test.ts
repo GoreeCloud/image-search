@@ -2,9 +2,9 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { normalizeImageQuery } from './query'
 import { normalizeWikipedia, searchWikipedia } from './wikipedia'
 import { normalizeArtic, searchArtic } from './artic'
-import { getWebImageEndpoint, hasWebImageEndpoint, normalizeWebImage, searchWebImages, setWebImageEndpoint } from './webImages'
+import { getWebImageEndpoint, hasWebImageEndpoint, normalizeWebImage, searchWebImages } from './webImages'
 
-afterEach(() => { setWebImageEndpoint(''); vi.unstubAllGlobals() })
+afterEach(() => { vi.unstubAllGlobals() })
 
 it('normalizes Samsung OneUI spelling for technology results', () => {
   expect(normalizeImageQuery('Samsung OneUI')).toBe('Samsung One UI')
@@ -42,41 +42,38 @@ it('uses Art Institute search pagination', async () => {
   expect(fetcher.mock.calls[0][0]).toContain('is_public_domain')
 })
 
-it('rejects unsafe or query-bearing web search origins', () => {
-  expect(()=>setWebImageEndpoint('http://localhost:8080')).toThrow('HTTPS')
-  expect(()=>setWebImageEndpoint('https://127.0.0.1')).toThrow('public HTTPS')
-  expect(()=>setWebImageEndpoint('https://search.example.org/search?api_key=secret')).toThrow('public HTTPS')
-  setWebImageEndpoint('https://search.example.org/')
-  expect(getWebImageEndpoint()).toBe('https://search.example.org/search')
+it('enables the first-party GoreeCloud Search image service without per-user setup', () => {
+  expect(getWebImageEndpoint()).toBe('https://search.goreecloud.com/search')
   expect(hasWebImageEndpoint()).toBe(true)
 })
 
 it('normalizes only HTTPS web image results with a real source URL', () => {
-  setWebImageEndpoint('https://search.example.org')
   const record={title:'Samsung One UI',url:'https://www.samsung.com/news',img_src:'https://images.samsung.com/oneui.png',thumbnail_src:'/image_proxy?url=sample',resolution:'1080 x 1920',engine:'bing images'}
   const result=normalizeWebImage(record,0,1)
-  expect(result?.thumbnailUrl).toContain('search.example.org/image_proxy')
-  expect(result?.license).toContain('rights vary')
+  expect(result?.thumbnailUrl).toContain('search.goreecloud.com/image_proxy')
+  expect(result?.license).toContain('rights unverified')
   expect(result?.width).toBe(1080)
   expect(normalizeWebImage({...record,img_src:'http://localhost/a.jpg'},0,1)).toBeNull()
   expect(normalizeWebImage({...record,url:'https://192.168.0.1'},0,1)).toBeNull()
 })
 
-it('uses session web image endpoint with JSON image category and pagination', async () => {
-  setWebImageEndpoint('https://search.example.org')
+it('uses POST to the first-party image service without credentials or search terms in URLs', async () => {
   const fetcher=vi.fn().mockResolvedValue({ok:true,json:async()=>({results:[{title:'UI',url:'https://www.samsung.com/a',img_src:'https://images.samsung.com/a.jpg'}]})})
   vi.stubGlobal('fetch',fetcher)
   const result=await searchWebImages('Samsung One UI',null)
   expect(result.items).toHaveLength(1)
   expect(result.cursor).toBe('2')
-  expect(fetcher.mock.calls[0][0]).toContain('categories=images')
-  expect(fetcher.mock.calls[0][0]).toContain('format=json')
-  setWebImageEndpoint('')
-  await expect(searchWebImages('Samsung',null)).rejects.toThrow('Settings')
+  const [url, options] = fetcher.mock.calls[0]
+  expect(url).toBe('https://search.goreecloud.com/search')
+  expect(options.method).toBe('POST')
+  expect(options.credentials).toBe('omit')
+  expect(options.referrerPolicy).toBe('no-referrer')
+  expect(options.body.get('q')).toBe('Samsung One UI')
+  expect(options.body.get('categories')).toBe('images')
+  expect(options.body.get('format')).toBe('json')
 })
 
-it('surfaces unavailable SearXNG JSON output', async () => {
-  setWebImageEndpoint('https://search.example.org')
+it('surfaces unavailable first-party JSON output', async () => {
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false,status:403}))
   await expect(searchWebImages('Samsung',null)).rejects.toThrow('JSON')
 })
