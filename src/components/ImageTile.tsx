@@ -1,6 +1,7 @@
-import { Bookmark, ArrowUpRight, Download, ImageOff, LoaderCircle, RefreshCw } from 'lucide-react'
+import { Bookmark, ArrowUpRight, Download, Copyright, ImageOff, LoaderCircle, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ImageResult } from '../types'
+import { showCopyrightNotice } from '../services/imageRights'
 import { trustedImageFallback } from '../services/imageFallback'
 
 type Props = {
@@ -49,6 +50,12 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
           </span>}
         </div>
       </button>
+      {!failed && showCopyrightNotice(item) && (
+        <span className="tile-copyright" role="img" aria-label="Copyright or reuse restrictions may apply. Check original source."
+          title="Copyright or reuse restrictions may apply · check source">
+          <Copyright size={16} strokeWidth={1.9} />
+        </span>
+      )}
       {failed && <a className="tile-source" href={item.sourceUrl} target="_blank"
         rel="noopener noreferrer" aria-label={`View source for ${item.title}`}>View source <ArrowUpRight size={12} /></a>}
       <button type="button" className="tile-download" onClick={onDownload} disabled={downloadBusy}
