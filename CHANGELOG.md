@@ -43,3 +43,5 @@
 - Added web compilation and tests, plus Linux/Android Tauri configuration and CI pipeline.
 - Added installable offline-shell PWA, request timeouts, safer metadata handling and recoverable next-page failures.
 - Production deployment, native runtime tests, and signed Android distribution remain unverified.
+
+- Android: save originals to the native Downloads collection; remove incomplete files and confirm completed saves rather than WebView download-start notifications.
