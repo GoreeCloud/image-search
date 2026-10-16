@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { searchCommons } from '../services/commons'
-import { searchOpenverse } from '../services/openverse'
+import { SOURCE_SEARCH, searchAllSources, uniqueImages } from '../services/providers'
+import type { ImageSource } from '../services/providers'
 import type { ImageResult } from '../types'
 
-export type SearchSource = 'openverse' | 'commons'
-
-export function useImageSearch(query: string, refreshKey = 0, source: SearchSource = 'openverse') {
-  const searchProvider = source === 'openverse' ? searchOpenverse : searchCommons
+export function useImageSearch(query: string, refreshKey = 0, source: ImageSource = 'all') {
+  const searchProvider = source === 'all' ? searchAllSources : SOURCE_SEARCH[source]
   const [images, setImages] = useState<ImageResult[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -33,7 +31,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: SearchSour
     searchProvider(query, null, controller.signal)
       .then((result) => {
         if (controller.signal.aborted || request !== requestRef.current) return
-        setImages(result.items)
+        setImages(uniqueImages(result.items))
         setCursor(result.cursor)
       })
       .catch((reason: unknown) => {
@@ -56,8 +54,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: SearchSour
       const result = await searchProvider(query, cursor, controllerRef.current?.signal)
       if (request !== requestRef.current || controllerRef.current?.signal.aborted) return
       setImages((prev) => {
-        const seen = new Set(prev.map((item) => item.id))
-        return [...prev, ...result.items.filter((item) => !seen.has(item.id))]
+        return uniqueImages([...prev, ...result.items])
       })
       setCursor(result.cursor)
     } catch (reason) {

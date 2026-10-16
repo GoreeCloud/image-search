@@ -4,6 +4,7 @@ import { ImageTile } from './components/ImageTile'
 import { ImageDetail } from './components/ImageDetail'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
+import type { ImageSource } from './services/providers'
 import type { ImageResult } from './types'
 
 const TOPICS = ['Nature', 'Architecture', 'Interiors', 'Travel', 'Wildlife', 'Flowers', 'Textures']
@@ -32,7 +33,7 @@ export default function App() {
   const [detailId, setDetailId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [refresh, setRefresh] = useState(0)
-  const [source, setSource] = useState<'openverse' | 'commons'>('openverse')
+  const [source, setSource] = useState<ImageSource>('all')
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
@@ -116,7 +117,7 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-inner">
           <button type="button" className="brand" onClick={() => { setView('explore'); setOrientation('all') }} aria-label="Image Search home">
-            <span className="brand-mark"><Images size={21} strokeWidth={2.2}/></span>
+            <span className="brand-mark"><img src="/app-icon.svg" alt="" /></span>
             <span className="brand-name">image<span>search</span><b className="brand-beta">BETA</b></span>
           </button>
           <form className="search-form" role="search" onSubmit={submitSearch}>
@@ -140,7 +141,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'openverse' ? 'Open-licensed imagery · Openverse' : 'Wikimedia Commons') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? 'Four image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : 'Library of Congress') : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -157,9 +158,12 @@ export default function App() {
           </div>
           <div className="toolbar-filters">
           <div className="filter-wrap source-filter"><label htmlFor="source">Source</label>
-            <select id="source" value={source} onChange={(event) => { setSource(event.target.value as 'openverse' | 'commons'); setOrientation('all') }}>
-              <option value="openverse">Across the web</option>
+            <select id="source" value={source} onChange={(event) => { setSource(event.target.value as ImageSource); setOrientation('all') }}>
+              <option value="all">All sources</option>
+              <option value="openverse">Openverse</option>
               <option value="commons">Wikimedia Commons</option>
+              <option value="loc">Library of Congress</option>
+              <option value="nasa">NASA Images</option>
             </select>
           </div>
           <div className="filter-wrap"><SlidersHorizontal size={16}/>

@@ -78,6 +78,7 @@ jobs:
       - run: npm run tauri -- android init
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+      - run: bash scripts/prepare-android.sh
       - run: npm run tauri -- android build --debug --target aarch64
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
