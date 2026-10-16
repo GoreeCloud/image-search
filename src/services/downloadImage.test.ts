@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { invoke, isTauri } from '@tauri-apps/api/core'
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(), isTauri: vi.fn(() => false) }))
 import { downloadOriginalImage, ImageDownloadError, isNativeAndroidDownload, makeImageFilename } from './downloadImage'
 
 const image = { title: 'Seaside / Sunset', url: 'https://upload.wikimedia.org/example.jpg' }
 
 describe('original image downloads', () => {
   beforeEach(() => {
+    vi.mocked(isTauri).mockReturnValue(false)
     vi.stubGlobal('fetch', vi.fn())
     vi.stubGlobal('URL', URL)
     URL.createObjectURL = vi.fn(() => 'blob:https://app.example/image-123')
@@ -16,6 +20,26 @@ describe('original image downloads', () => {
 
   it('does not claim a native Android download in an ordinary browser', () => {
     expect(isNativeAndroidDownload()).toBe(false)
+  })
+
+  it('saves through the native bridge on Android without a WebView blob click', async () => {
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Linux; Android 11; OnePlus)' })
+    vi.mocked(invoke).mockResolvedValue('Seaside Sunset.jpg')
+    expect(isNativeAndroidDownload()).toBe(true)
+    expect(await downloadOriginalImage(image)).toBe('Seaside Sunset.jpg')
+    expect(invoke).toHaveBeenCalledWith('save_image_android', {
+      url: image.url, title: image.title,
+    })
+    expect(fetch).not.toHaveBeenCalled()
+    expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled()
+  })
+
+  it('surfaces native storage failures without claiming a download', async () => {
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.stubGlobal('navigator', { userAgent: 'Android' })
+    vi.mocked(invoke).mockRejectedValue('Android could not finalize the downloaded file.')
+    await expect(downloadOriginalImage(image)).rejects.toThrow('could not finalize')
   })
 
   it('sanitizes filenames rather than trusting source paths', () => {
