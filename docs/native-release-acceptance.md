@@ -12,7 +12,7 @@ This checklist applies to GoreeCloud Image Search development builds. Passing CI
 
 ## Android checks
 
-1. Inspect package identity `com.goreecloud.imagesearch`, versionCode, target SDK, supported architecture, APK integrity, and signing-certificate fingerprint.
+1. Inspect package identity `com.goreecloud.imagesearch`, versionCode, target SDK, supported architecture, APK integrity, and signing-certificate fingerprint. Run `scripts/verify-android-apk.sh /path/to/app.apk`; for a Development release supply the approved `EXPECTED_SIGNER_SHA256` and `PREVIOUS_VERSION_CODE` environment variables so a changed certificate or non-increasing versionCode fails closed. A debug build without these reference values is **not** verified update-compatible.
 2. Install on a representative Android 15/16 device or emulator; confirm startup, remote provider search, thumbnail rendering, and no fatal exceptions.
 3. Inspect status-bar, navigation-bar, cutout, three-button navigation, gesture navigation, device rotation, and keyboard behavior. Content and bottom controls must stay outside interactive system UI.
 4. Exercise source filters, saved collection, lightbox navigation, focus accessibility, thumbnail retry, and source-link privacy behavior.
