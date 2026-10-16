@@ -2,6 +2,7 @@
 name = "image-search"
 version = "0.1.0"
 description = "GoreeCloud Image Search"
+license = "AGPL-3.0-or-later"
 authors = ["GoreeCloud"]
 edition = "2021"
 
