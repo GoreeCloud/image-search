@@ -1,6 +1,6 @@
 ## Unreleased — broader image search
 
-- Add Wikipedia article images and Art Institute of Chicago public-domain artwork images.
+- Add Wikipedia article images; keep Art Institute behind a provider compatibility gate until CDN previews work.
 - Add optional SearXNG web image results using a user-controlled HTTPS endpoint.
 - Normalize Samsung OneUI spelling, prioritize web results, and test input validation.
 
