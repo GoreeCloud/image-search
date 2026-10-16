@@ -4,7 +4,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search **six keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Search **eight keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, Wikipedia article images, and public-domain Art Institute of Chicago artworks. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
@@ -16,7 +16,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
-**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
+**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These keyless collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
 
 ## Requirements
 
@@ -108,3 +108,33 @@ The Met is filtered to public-domain items, and individual image URLs are
 limited to its official CDN. These sources are not unrestricted web crawlers.
 
 Android QA: On Android 10+, downloads now use native MediaStore to save to the public Downloads folder; only a finalized file triggers success. Physical-device verification is required before release.
+
+## Expanded image discovery (development)
+
+Eight keyless sources now feed **All sources**, including newly supported
+Wikipedia article lead images and public-domain artworks from the Art Institute
+of Chicago. The search input normalizes common technology-name variations such
+as `Samsung OneUI` to `Samsung One UI` when querying providers.
+
+**Optional broader web search:** Settings → API → Broader Web Images accepts a
+trusted HTTPS SearXNG address. Your own SearXNG instance must enable JSON image
+results, CORS access to the app's origin, and image engines. When connected,
+web images join the federated results (with web results prioritized) and can
+be selected independently in the Source filter. A connected service can search
+across multiple upstream engines; the actual coverage depends on its configured
+engines and their accessibility. This feature is not a claim of Google Images
+coverage, and it does not scrape Google or use Google private endpoints.
+
+The SearXNG connection is opt-in and held in memory for this app session only.
+Search terms are sent to the selected instance; previews from remote websites
+may disclose the viewer's IP address to those sites. Web result licensing and
+attribution vary, so follow the linked source and verify rights before reuse.
+Only public HTTPS hostnames are accepted for the SearXNG endpoint; anonymous
+third-party public instances may disable JSON output or CORS. No private API
+key is requested. If the web endpoint fails, other federated providers remain
+usable.
+
+The native shell permits HTTPS image thumbnails and HTTPS connections to allow
+user-selected web endpoints. Unlike the preexisting keyless source thumbnails,
+web results can load from third-party media domains. See the new provider
+normalization/validation and regression tests under `src/services`.
