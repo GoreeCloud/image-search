@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { downloadOriginalImage, ImageDownloadError, makeImageFilename } from './downloadImage'
+import { downloadOriginalImage, ImageDownloadError, isNativeAndroidDownload, makeImageFilename } from './downloadImage'
 
 const image = { title: 'Seaside / Sunset', url: 'https://upload.wikimedia.org/example.jpg' }
 
@@ -13,6 +13,10 @@ describe('original image downloads', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   })
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+  it('does not claim a native Android download in an ordinary browser', () => {
+    expect(isNativeAndroidDownload()).toBe(false)
+  })
 
   it('sanitizes filenames rather than trusting source paths', () => {
     expect(makeImageFilename(' ../Portrait: Dawn? ', 'image/jpeg')).toBe('Portrait Dawn.jpg')
