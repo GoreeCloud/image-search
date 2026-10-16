@@ -54,7 +54,7 @@ Android requires SDK + NDK + a connected emulator/device for actual runtime test
 
 ## Search provider and image rights
 
-The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply) or `https://commons.wikimedia.org/w/api.php` with `origin=*`. Openverse previews are proxied by Openverse; Commons thumbnails are served from trusted Wikimedia hosts. Each image links to its Commons file page for the authoritative author, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
+The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply) or `https://commons.wikimedia.org/w/api.php` with `origin=*`. Openverse previews are proxied by Openverse; Commons thumbnails are served from trusted Wikimedia hosts. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
 
 No API keys are embedded in client code. Future commercial search providers should use a separate secured proxy with appropriate quotas, caching, licensing and terms compliance.
 
@@ -71,3 +71,7 @@ No API keys are embedded in client code. Future commercial search providers shou
 ## Acceptance status
 
 This is an initial development implementation. It must not be called production Stable without platform-runtime testing, security review, source availability checks, release signing, install/upgrade testing, and acceptance verification.
+
+## License
+
+Copyright (C) 2026 GoreeCloud. Original GoreeCloud Image Search source code is licensed under **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**; see [LICENSE](LICENSE) for the complete terms. This covers the original application source, not third-party libraries or remotely served images. Dependencies and source images remain subject to their respective licenses and attribution requirements.
