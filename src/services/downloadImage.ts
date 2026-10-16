@@ -38,6 +38,7 @@ function getDownloadUrl(original: string): string {
   const host = parsed.hostname.toLowerCase()
   if (parsed.protocol !== 'https:' || parsed.username || parsed.password
     || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')
+    || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')
     || /^(127\.|10\.|192\.168\.|169\.254\.|0\.|::1$)/.test(host)
     || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
     throw new ImageDownloadError('This image has no secure public download link.')
