@@ -4,7 +4,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search **five distinct image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, and CC0 Cleveland Museum of Art collections. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Search **six keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Save / unsave images locally on-device. Copy original links, inspect creator, resolution and license.
@@ -15,7 +15,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
-**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art contributes keyless CC0 collection images served from its Open Access CDN. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
+**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
 
 ## Requirements
 
@@ -57,7 +57,7 @@ Android requires SDK + NDK + a connected emulator/device for actual runtime test
 
 ## Search provider and image rights
 
-The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply), `https://commons.wikimedia.org/w/api.php` with `origin=*`, `https://images-api.nasa.gov/search`, and `https://www.loc.gov/photos/?fo=json, and https://openaccess-api.clevelandart.org/api/artworks/`. Previews come from provider-controlled hosts, not through our infrastructure. Openverse third-party originals are not fetched automatically as thumbnail fallbacks. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
+The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply), `https://commons.wikimedia.org/w/api.php` with `origin=*`, `https://images-api.nasa.gov/search`, and `https://www.loc.gov/photos/?fo=json, https://openaccess-api.clevelandart.org/api/artworks/, and the current Metropolitan Museum of Art v1.1 paginated search endpoint.`. Previews come from provider-controlled hosts, not through our infrastructure. Openverse third-party originals are not fetched automatically as thumbnail fallbacks. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
 
 No API keys are embedded in client code. Future commercial search providers should use a separate secured proxy with appropriate quotas, caching, licensing and terms compliance.
 
@@ -81,3 +81,26 @@ This is an initial development implementation. It must not be called production 
 ## License
 
 Copyright (C) 2026 GoreeCloud. Original GoreeCloud Image Search source code is licensed under **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**; see [LICENSE](LICENSE) for the complete terms. This covers the original application source, not third-party libraries or remotely served images. Dependencies and source images remain subject to their respective licenses and attribution requirements.
+
+### Appearance and optional provider API keys
+
+On mobile, **Settings** sits beside Explore and Saved in the bottom dock; on
+desktop it is in the main navigation. Settings > **Appearance** lets you choose
+Dark or Light Mode. Only the theme preference is stored locally.
+
+**Settings > API** supports optional Pexels photographs with a user-provided
+Pexels API key. Pexels needs its own API authorization and is not queried
+without a key. See https://www.pexels.com/api/documentation/. Connected Pexels
+results join All sources, or select Pexels from the source filter.
+
+**Key security:** the Pexels key is held only in this session's JavaScript
+memory and sent as an HTTPS Authorization header directly to api.pexels.com,
+never put into image URLs, committed to GitHub, or persisted in localStorage.
+Reloading or closing the app clears it. Do not enter server-side confidential
+credentials in a browser/client application. No provider account is created
+for the user. Provider-specific usage rights, quotas and attribution still apply.
+
+The Met API uses https://collectionapi.metmuseum.org/public/collection/v1.1/search
+(paginated; the older v1 search endpoint was deprecated in October 2026).
+The Met is filtered to public-domain items, and individual image URLs are
+limited to its official CDN. These sources are not unrestricted web crawlers.

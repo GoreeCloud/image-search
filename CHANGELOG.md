@@ -1,3 +1,11 @@
+## Unreleased — expanded sources and Settings
+
+- Add The Metropolitan Museum of Art CC0 collection imagery to keyless federated search through its current v1.1 paginated API.
+- Add optional Pexels photo search with a user-supplied API key, held only in session memory, never persisted to disk or sent in URLs.
+- Add Settings navigation beside Saved on mobile and in the desktop header, including API provider setup and removal.
+- Add Light and Dark Mode with locally retained theme choice, responsive contrast-safe surfaces, and mobile settings layout.
+- Pin additional provider API/CDN hosts in Tauri content security policy; reject unsafe image URLs and non-public-domain Met items.
+
 ## Unreleased — Android keyboard navigation behavior
 
 - Hide the mobile Explore/Saved bottom navigation while the software keyboard occupies a significant part of the visual viewport, restoring it when the keyboard closes.

@@ -1,0 +1,94 @@
+/* Settings follows the existing GoreeCloud Glaze surface geometry. */
+.settings-page { max-width: 920px; margin: 0 auto; padding: 5px 0 60px; }
+.settings-heading { margin: 4px 0 32px; }
+.settings-heading h1 { margin: 15px 0 13px; }
+.settings-heading > p { color: #a6a4ae; font-size: 14px; line-height: 1.6; }
+.settings-card { padding: 27px; border: 1px solid #35313e; border-radius: 19px; background: #1b1922; margin-bottom: 19px; }
+.settings-card-heading { margin-bottom: 24px; }
+.settings-card-heading h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; margin: 0 0 8px; }
+.settings-card-heading p { color: #b4afbf; font-size: 13px; line-height: 1.6; margin: 0; }
+.settings-choice { display: flex; gap: 12px; }
+.settings-choice button { border: 1px solid #4b4358; border-radius: 12px; background: #2a2631; color: #eeeaf6; padding: 14px 20px; display: flex; gap: 11px; align-items: center; justify-content: center; min-width: 160px; font-size: 13px; font-weight: 650; }
+.settings-choice button.chosen { border-color: #b7a7ff; background: #403555; color: #ece4ff; }
+.provider-row { display: flex; align-items: start; justify-content: space-between; gap: 15px; border: 1px solid #36313f; padding: 17px; border-radius: 12px; }
+.provider-row strong { font-size: 14px; }
+.provider-row p { color: #afa9bb; font-size: 12px; margin: 9px 0; line-height: 1.5; }
+.provider-row a { color: #c6b7ff; display: inline-flex; gap: 6px; align-items: center; font-size: 12px; text-decoration: none; }
+.provider-status { border-radius: 30px; padding: 7px 10px; background: #302c38; color: #c4bacc; white-space: nowrap; font-size: 11px; }
+.api-form { margin: 20px 0; }
+.api-form > label { display: block; font-weight: 650; font-size: 12px; margin-bottom: 10px; }
+.api-form-fields { display: flex; flex-wrap: wrap; gap: 9px; }
+.api-form input { flex: 1; min-width: 175px; border-radius: 10px; border: 1px solid #4e4656; background: #25222e; color: #f9f7ff; padding: 12px 14px; font-size: 13px; }
+.api-form button { border: 0; border-radius: 10px; color: #20152e; background: #b8a9ff; padding: 12px 18px; font-weight: 720; font-size: 12px; }
+.api-form button:disabled { opacity: .5; cursor: not-allowed; }
+.api-form button.disconnect { color: #ded7ee; background: #37313e; display: flex; gap: 6px; align-items: center; }
+.api-notice { color: #cebfff; font-size: 12px; }
+.api-privacy { display: flex; align-items: flex-start; gap: 8px; line-height: 1.6; color: #aaa5b7; font-size: 12px; margin-top: 14px; }
+.api-privacy svg { flex: 0 0 auto; margin-top: 2px; }
+@media(max-width:680px){
+  .settings-page { padding: 4px 0 75px; }
+  .settings-card { padding: 18px; border-radius: 16px; }
+  .settings-heading { margin-bottom: 25px; }
+  .settings-heading h1 { font-size: 33px; }
+  .settings-choice button { min-width: 0; flex: 1; padding: 14px 8px; }
+  .provider-row { flex-direction: column; gap: 6px; }
+  .mobile-nav button { width: 33.333%; }
+}
+
+/* Light palette overrides the dark-first Glaze presentation without changing image artwork. */
+:root[data-theme="light"] { color-scheme: light; color: #232037; background: #faf9fc; --muted: #675f75; --edge: #ddd7e5; --lavender: #5c4c9c; }
+:root[data-theme="light"] .app-shell { color: #232037; background: radial-gradient(ellipse 45% 12% at 50% 1%, #eee8ff 0, transparent 90%), #faf9fc; }
+:root[data-theme="light"] .topbar { background: #ffffffee; border-color: #e6e0ed; }
+:root[data-theme="light"] .brand { color: #211d31; }
+:root[data-theme="light"] .brand-name span, :root[data-theme="light"] h1 em { color: #6856af; }
+:root[data-theme="light"] .brand-beta { color: #665a7b; border-color: #dfd5ee; }
+:root[data-theme="light"] .search-form, :root[data-theme="light"] .topic, :root[data-theme="light"] .filter-wrap { background: #fff; border-color: #ded9e7; color: #494153; }
+:root[data-theme="light"] .search-form input { color: #211a2d; }
+:root[data-theme="light"] .search-form input::placeholder { color: #777080; }
+:root[data-theme="light"] .search-shortcut { color: #6b6378; border-color: #ddd6e8; }
+:root[data-theme="light"] .clear-search, :root[data-theme="light"] .search-icon { color: #605b6c; }
+:root[data-theme="light"] .topbar .nav-link { color: #585168; }
+:root[data-theme="light"] .topbar .nav-link.selected { color: #574691; background: #eee8fb; }
+:root[data-theme="light"] .nav-link:hover:not(.selected) { background: #f3eefa; color: #4e416e; }
+:root[data-theme="light"] .eyebrow, :root[data-theme="light"] .topic.active { color: #6d54ae; }
+:root[data-theme="light"] .headline-row p, :root[data-theme="light"] .settings-heading > p { color: #615968; }
+:root[data-theme="light"] .topics-label, :root[data-theme="light"] .results-title span { color: #716879; }
+:root[data-theme="light"] .topic:hover, :root[data-theme="light"] .topic.active { background: #ede7f9; border-color: #b4a5d7; }
+:root[data-theme="light"] .filter-wrap select { color: #352c41; }
+:root[data-theme="light"] .filter-wrap select option { background: #fff; color: #251e34; }
+:root[data-theme="light"] .tile { background: #ebe7f0; }
+:root[data-theme="light"] .tile-image { background: linear-gradient(110deg,#e4dfed,#f5effa); }
+:root[data-theme="light"] .tile-main { color: #fff; }
+:root[data-theme="light"] .tile-failed { color: #514967; }
+:root[data-theme="light"] .skeleton { background: linear-gradient(100deg,#ece7f1 10%,#dcd6e7 45%,#ece7f1 80%); }
+:root[data-theme="light"] .source-pill, :root[data-theme="light"] .load-row button { background: #f4f0fa; border-color: #ded5e9; color: #50456b; }
+:root[data-theme="light"] .page-footer { border-color: #e1d9e9; color: #696271; }
+:root[data-theme="light"] .settings-card, :root[data-theme="light"] .empty-panel, :root[data-theme="light"] .error-panel { background: #fff; border-color: #e2dce9; }
+:root[data-theme="light"] .settings-card-heading p, :root[data-theme="light"] .provider-row p, :root[data-theme="light"] .api-privacy { color: #635d6d; }
+:root[data-theme="light"] .provider-row { border-color: #e7e0ed; }
+:root[data-theme="light"] .provider-row a { color: #5c46a0; }
+:root[data-theme="light"] .provider-status { color: #4c4460; background: #f0ebf6; }
+:root[data-theme="light"] .settings-choice button { color: #484154; background: #faf8fc; border-color: #dbd4e4; }
+:root[data-theme="light"] .settings-choice button.chosen { color: #514092; background: #ece5ff; border-color: #9880d8; }
+:root[data-theme="light"] .api-form input { background: #fff; color: #2f263f; border-color: #c9bfda; }
+:root[data-theme="light"] .api-form button.disconnect { background: #ece7f3; color: #423851; }
+:root[data-theme="light"] .api-notice { color: #5c459b; }
+:root[data-theme="light"] .message-bar { color: #775130; background: #fff4e9; border-color: #dfbc9a; }
+:root[data-theme="light"] .more-error { color: #664d69; background: #fff4f8; border-color: #e5bdcf; }
+:root[data-theme="light"] .empty-icon { background: #f0eaf9; border-color: #d5c4eb; color: #674fb0; }
+:root[data-theme="light"] .empty-panel p, :root[data-theme="light"] .error-panel p { color: #635b68; }
+:root[data-theme="light"] .mobile-nav { background: #fffefa; border-color: #e4dcea; }
+:root[data-theme="light"] .mobile-nav button { color: #6c6673; }
+:root[data-theme="light"] .mobile-nav button.selected { color: #5a429b; }
+:root[data-theme="light"] .lightbox-shell { background: #fff; border-color: #ded8e7; }
+:root[data-theme="light"] .lightbox-top { border-color: #e4ddec; }
+:root[data-theme="light"] .lightbox-brand { color: #5c536b; }
+:root[data-theme="light"] .icon-button { background: #eeeaf2; color: #393146; }
+:root[data-theme="light"] .detail-panel { border-color: #e5deed; }
+:root[data-theme="light"] .detail-eyebrow { color: #6650aa; }
+:root[data-theme="light"] .detail-description, :root[data-theme="light"] .detail-metadata span, :root[data-theme="light"] .detail-license { color: #6a6271; }
+:root[data-theme="light"] .detail-metadata strong { color: #302939; }
+:root[data-theme="light"] .detail-copy { background: #ede7f3; color: #43394e; }
+:root[data-theme="light"] .source-link { background: #f0eafb; border-color: #d6c8ea; color: #6244a8; }
+:root[data-theme="light"] .original-link { color: #655c70; }
+:root[data-theme="light"] .toast { background: #f4eefa; color: #312441; border-color: #d8cbed; box-shadow: 0 14px 40px #32214435; }
