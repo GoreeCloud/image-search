@@ -16,4 +16,5 @@ export type ImageResult = {
 export type SearchPage = {
   items: ImageResult[]
   cursor: string | null
+  unavailableSources?: string[]
 }
