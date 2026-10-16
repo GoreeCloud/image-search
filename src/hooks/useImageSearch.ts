@@ -3,12 +3,15 @@ import { searchCommons } from '../services/commons'
 import { searchOpenverse } from '../services/openverse'
 import type { ImageResult } from '../types'
 
-export function useImageSearch(query: string, refreshKey = 0, source: 'openverse' | 'commons' = 'openverse') {
+export type SearchSource = 'openverse' | 'commons'
+
+export function useImageSearch(query: string, refreshKey = 0, source: SearchSource = 'openverse') {
   const searchProvider = source === 'openverse' ? searchOpenverse : searchCommons
   const [images, setImages] = useState<ImageResult[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [cursor, setCursor] = useState<string | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
   const requestRef = useRef(0)
@@ -23,11 +26,13 @@ export function useImageSearch(query: string, refreshKey = 0, source: 'openverse
     setImages([])
     setCursor(null)
     setError(null)
+    setLoadMoreError(null)
     setLoading(true)
     setLoadingMore(false)
+
     searchProvider(query, null, controller.signal)
       .then((result) => {
-        if (request !== requestRef.current) return
+        if (controller.signal.aborted || request !== requestRef.current) return
         setImages(result.items)
         setCursor(result.cursor)
       })
@@ -44,23 +49,28 @@ export function useImageSearch(query: string, refreshKey = 0, source: 'openverse
     if (loading || loadingMore || moreBusyRef.current || !cursor || error) return
     moreBusyRef.current = true
     setLoadingMore(true)
+    setLoadMoreError(null)
     const request = requestRef.current
+
     try {
       const result = await searchProvider(query, cursor, controllerRef.current?.signal)
-      if (request !== requestRef.current) return
+      if (request !== requestRef.current || controllerRef.current?.signal.aborted) return
       setImages((prev) => {
         const seen = new Set(prev.map((item) => item.id))
         return [...prev, ...result.items.filter((item) => !seen.has(item.id))]
       })
       setCursor(result.cursor)
     } catch (reason) {
-      if (request === requestRef.current && !controllerRef.current?.signal.aborted)
-        setError(reason instanceof Error ? reason.message : 'Could not load more images.')
+      if (request === requestRef.current && !controllerRef.current?.signal.aborted) {
+        setLoadMoreError(reason instanceof Error ? reason.message : 'Could not load more images.')
+      }
     } finally {
-      if (request === requestRef.current) setLoadingMore(false)
-      moreBusyRef.current = false
+      if (request === requestRef.current) {
+        setLoadingMore(false)
+        moreBusyRef.current = false
+      }
     }
   }, [cursor, error, loading, loadingMore, query, source])
 
-  return { images, loading, loadingMore, error, hasMore: Boolean(cursor), loadMore }
+  return { images, loading, loadingMore, error, loadMoreError, hasMore: Boolean(cursor), loadMore }
 }

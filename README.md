@@ -10,6 +10,8 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Save / unsave images locally on-device. Copy original links, inspect creator, resolution and license.
 - Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
+- Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
+- Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
 
 **Scope:** Openverse indexes openly licensed media from multiple websites. Wikimedia Commons is also available. Neither source is a general-purpose unrestricted web crawler. Both APIs have rate/usage limitations. Search queries go to the selected provider; previews are fetched from the Openverse thumbnail endpoint or Wikimedia CDN. Saved images contain URL/metadata, not offline image binaries.
 
@@ -26,6 +28,10 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+### Install the web app
+
+Serve the production `dist/` directory over HTTPS (or use localhost during development). On supported browsers, use **Install app** / **Add to Home screen** to install the PWA. The service worker precaches only same-origin application assets: it does not cache third-party image results, user searches, or raw images. Native Linux/Android Tauri packaging remains separate.
 
 ## Linux
 
@@ -55,7 +61,8 @@ No API keys are embedded in client code. Future commercial search providers shou
 ## Architecture
 
 - `src/services/openverse.ts` and `src/services/commons.ts`: open-license image provider APIs, response normalization, URL trust boundaries and pagination.
-- `src/hooks`: image search request lifecycle and local saved state.
+- `src/hooks`: image search request lifecycle and local saved state, with separate first-page and load-more error handling.
+- `src/services/network.ts`: cancellable HTTP timeout helper shared by image providers.
 - `src/components`: masonry tiles and lightbox.
 - `src/styles.css`: shared responsive, reduced-motion-aware styling.
 - `src-tauri`: minimal Rust shell with a restrictive content security policy.
