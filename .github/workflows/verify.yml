@@ -51,7 +51,7 @@ jobs:
 
   android:
     name: Android debug packaging (not update-signed)
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
