@@ -8,7 +8,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Save / unsave images locally on-device. Copy original links, inspect creator, resolution and license.
-- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, reduced-motion support and touch-friendly layouts.
+- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 
 **Scope:** Openverse indexes openly licensed media from multiple websites. Wikimedia Commons is also available. Neither source is a general-purpose unrestricted web crawler. Both APIs have rate/usage limitations. Search queries go to the selected provider; previews are fetched from the Openverse thumbnail endpoint or Wikimedia CDN. Saved images contain URL/metadata, not offline image binaries.
