@@ -1,3 +1,9 @@
+## Unreleased — original image download action
+
+- Add Download image to masonry results and image previews. Keep Save as a separate local-bookmark action.
+- Fetch original image bytes on user action, with HTTPS-only links, credential-free CORS, image MIME allowlist, 40 MB limit, safe filenames, and explicit unsupported-provider errors.
+- Add responsive download controls, loading state, and regression tests. Browser downloads require provider CORS permission; native WebView/device behavior and production packaging still require validation.
+
 ## Unreleased — expanded sources and Settings
 
 - Add The Metropolitan Museum of Art CC0 collection imagery to keyless federated search through its current v1.1 paginated API.
