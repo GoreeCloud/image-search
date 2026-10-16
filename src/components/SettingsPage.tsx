@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { KeyRound, LockKeyhole, Moon, Sun, Unplug, ExternalLink } from 'lucide-react'
 import { hasEuropeanaKey, setEuropeanaKey } from '../services/apiKeys'
+import { getWebImageEndpoint, hasWebImageEndpoint, setWebImageEndpoint } from '../services/webImages'
 import type { ThemeMode } from '../hooks/useThemeMode'
 
 type Props = {
@@ -13,6 +14,9 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
   const [keyDraft, setKeyDraft] = useState('')
   const [configured, setConfigured] = useState(hasEuropeanaKey())
   const [notice, setNotice] = useState('')
+  const [webDraft, setWebDraft] = useState('')
+  const [webConfigured, setWebConfigured] = useState(hasWebImageEndpoint())
+  const [webNotice, setWebNotice] = useState('')
 
   function updateKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -32,6 +36,26 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
     setKeyDraft('')
     setConfigured(false)
     setNotice('Europeana disconnected from this session.')
+    onApiChange()
+  }
+
+  function connectWebImages(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    try {
+      setWebImageEndpoint(webDraft)
+      setWebConfigured(hasWebImageEndpoint())
+      setWebDraft('')
+      setWebNotice('Web images connected for this session. Search to verify provider availability.')
+      onApiChange()
+    } catch (error) {
+      setWebNotice(error instanceof Error ? error.message : 'Could not connect the web image service.')
+    }
+  }
+  function disconnectWebImages() {
+    setWebImageEndpoint('')
+    setWebConfigured(false)
+    setWebDraft('')
+    setWebNotice('Web images disconnected from this session.')
     onApiChange()
   }
 
@@ -78,6 +102,26 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
         </form>
         {notice && <p role="status" className="api-notice">{notice}</p>}
         <p className="api-privacy" id="api-privacy"><LockKeyhole size={15}/> Keys stay in this app session's memory and are not saved to disk or included in image URLs. The key is sent only to the chosen provider as an X-Api-Key header. Use a personal key only for personal exploration; services require provider-approved project keys. Closing or reloading the app clears it. Use a provider-issued key intended for client applications; never paste private server secrets.</p>
+        <div className="provider-row">
+          <div>
+            <strong>Broader Web Images (SearXNG)</strong>
+            <p>Connect a trusted HTTPS SearXNG instance with JSON image search and CORS enabled. It can aggregate several general-purpose image engines for searches such as Samsung One UI.</p>
+            <a href="https://docs.searxng.org/dev/search_api.html" target="_blank" rel="noopener noreferrer">SearXNG API documentation <ExternalLink size={13}/></a>
+          </div>
+          <span className="provider-status">{webConfigured ? 'Connected for this session' : 'Not connected'}</span>
+        </div>
+        <form className="api-form" onSubmit={connectWebImages}>
+          <label htmlFor="web-image-endpoint">SearXNG HTTPS address</label>
+          <div className="api-form-fields">
+            <input id="web-image-endpoint" type="url" autoComplete="off" spellCheck={false} maxLength={300}
+              placeholder={webConfigured ? getWebImageEndpoint() : 'https://search.example.org'}
+              value={webDraft} onChange={event => setWebDraft(event.target.value)} />
+            <button type="submit" disabled={!webDraft.trim()}>Connect</button>
+            {webConfigured && <button type="button" className="disconnect" onClick={disconnectWebImages}><Unplug size={16}/> Remove</button>}
+          </div>
+        </form>
+        {webNotice && <p role="status" className="api-notice">{webNotice}</p>}
+        <p className="api-privacy"><LockKeyhole size={15}/> This optional connection runs only when enabled, is never saved, and shares searches with your chosen SearXNG instance. Web results may load thumbnails from third-party sites, and usage rights vary. Use a trusted instance with browser CORS and JSON image results enabled; other image collections remain available without this connection.</p>
         <p className="api-privacy">Connected providers are included in “All sources.” If a provider fails or reaches its API limit, the other sources remain usable.</p>
       </section>
     </section>
