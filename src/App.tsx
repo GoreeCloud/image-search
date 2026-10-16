@@ -5,7 +5,7 @@ import { ImageDetail } from './components/ImageDetail'
 import { SettingsPage } from './components/SettingsPage'
 import { useThemeMode } from './hooks/useThemeMode'
 import { hasEuropeanaKey } from './services/apiKeys'
-import { downloadOriginalImage } from './services/downloadImage'
+import { downloadOriginalImage, isNativeAndroidDownload } from './services/downloadImage'
 import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
@@ -122,7 +122,7 @@ export default function App() {
     setDownloadingId(image.id)
     try {
       const filename = await downloadOriginalImage(image)
-      setToast('Download started: ' + filename)
+      setToast((isNativeAndroidDownload() ? 'Saved to Downloads: ' : 'Download started: ') + filename)
     } catch (error) {
       setToast(error instanceof Error ? error.message : 'Image download failed. Open the original image instead.')
     } finally {
