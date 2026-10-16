@@ -106,3 +106,5 @@ The Met API uses https://collectionapi.metmuseum.org/public/collection/v1.1/sear
 (paginated; the older v1 search endpoint was deprecated in October 2026).
 The Met is filtered to public-domain items, and individual image URLs are
 limited to its official CDN. These sources are not unrestricted web crawlers.
+
+Android QA: On Android 10+, downloads now use native MediaStore to save to the public Downloads folder; only a finalized file triggers success. Physical-device verification is required before release.
