@@ -2,7 +2,7 @@
  * Bound individual remote API requests and correctly dispose of abort listeners.
  * Never caches requests or transmits credentials.
  */
-export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeoutMs = 16000): Promise<Response> {
+export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeoutMs = 16000, extraHeaders?: Record<string, string>): Promise<Response> {
   const controller = new AbortController()
   let timedOut = false
   const abortRequest = () => controller.abort()
@@ -16,7 +16,7 @@ export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeou
     return await fetch(url, {
       method: 'GET',
       signal: controller.signal,
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json', ...extraHeaders },
     })
   } catch (reason) {
     if (timedOut) throw new Error('Image source timed out. Please retry.')

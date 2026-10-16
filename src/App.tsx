@@ -1,7 +1,11 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, Bookmark, Compass, Images, Search, SlidersHorizontal, Sparkles, X, RotateCcw } from 'lucide-react'
+import { ArrowDown, Bookmark, Compass, Images, Search, SlidersHorizontal, Sparkles, X, RotateCcw, Settings2 } from 'lucide-react'
 import { ImageTile } from './components/ImageTile'
 import { ImageDetail } from './components/ImageDetail'
+import { SettingsPage } from './components/SettingsPage'
+import { useThemeMode } from './hooks/useThemeMode'
+import { hasEuropeanaKey } from './services/apiKeys'
+import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
 import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard'
@@ -9,7 +13,7 @@ import type { ImageSource } from './services/providers'
 import type { ImageResult } from './types'
 
 const TOPICS = ['Nature', 'Architecture', 'Interiors', 'Travel', 'Wildlife', 'Flowers', 'Textures']
-type View = 'explore' | 'saved'
+type View = 'explore' | 'saved' | 'settings'
 type Orientation = 'all' | 'landscape' | 'portrait' | 'square'
 const ORIENTATIONS: { value: Orientation; label: string }[] = [
   { value: 'all', label: 'All images' },
@@ -36,6 +40,7 @@ export default function App() {
   const [refresh, setRefresh] = useState(0)
   const [source, setSource] = useState<ImageSource>('all')
   const keyboardOpen = useSoftwareKeyboard()
+  const [theme, setTheme] = useThemeMode()
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
@@ -91,6 +96,11 @@ export default function App() {
     if (query === topic.toLowerCase()) setRefresh((n) => n + 1)
   }
 
+  function onApiChange() {
+    if (source === 'europeana' && !hasEuropeanaKey()) setSource('all')
+    setRefresh(n => n + 1)
+  }
+
   const closeDetail = useCallback(() => setDetailId(null), [])
   const nextDetail = useCallback(() => {
     setDetailId((id) => {
@@ -132,18 +142,20 @@ export default function App() {
           <nav className="topnav" aria-label="Main navigation">
             <button type="button" className={`nav-link ${view === 'explore' ? 'selected' : ''}`} onClick={() => setView('explore')}><Compass size={18}/><span>Explore</span></button>
             <button type="button" className={`nav-link ${view === 'saved' ? 'selected' : ''}`} onClick={() => setView('saved')}><Bookmark size={18}/><span>Saved</span>{saved.length > 0 && <em>{saved.length}</em>}</button>
+            <button type="button" className={`nav-link ${view === 'settings' ? 'selected' : ''}`} onClick={() => setView('settings')} aria-label="Settings"><Settings2 size={18}/><span>Settings</span></button>
           </nav>
         </div>
       </header>
 
       <main className="page-main">
+        {view === 'settings' ? <SettingsPage theme={theme} onThemeChange={setTheme} onApiChange={onApiChange}/> : <>
         <div className="headline-row">
           <div>
             <div className="eyebrow"><Sparkles size={14}/>{view === 'explore' ? 'YOUR VISUAL DISCOVERY SPACE' : 'YOUR PERSONAL COLLECTION'}</div>
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? 'Five image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : 'Library of Congress') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? hasEuropeanaKey() ? 'Seven image collections' : 'Six image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'europeana' ? 'Europeana' : 'Library of Congress') : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -167,6 +179,8 @@ export default function App() {
               <option value="loc">Library of Congress</option>
               <option value="nasa">NASA Images</option>
               <option value="cleveland">Cleveland Museum of Art</option>
+              <option value="met">The Metropolitan Museum of Art</option>
+              <option value="europeana">Europeana (API key)</option>
             </select>
           </div>
           <div className="filter-wrap"><SlidersHorizontal size={16}/>
@@ -204,11 +218,13 @@ export default function App() {
           <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? 'Finding more images…' : 'Explore more'} <ArrowDown size={16} /></button>
         </div>}
         <footer className="page-footer"><span>Image Search <span className="footer-dot">✦</span> Made with care by GoreeCloud</span><span>Images belong to their respective creators. Check licensing before reuse.</span></footer>
+        </>}
       </main>
 
       <nav className="mobile-nav" aria-label="Mobile navigation">
         <button type="button" className={view === 'explore' ? 'selected' : ''} onClick={() => setView('explore')}><Compass size={21}/><span>Explore</span></button>
         <button type="button" className={view === 'saved' ? 'selected' : ''} onClick={() => setView('saved')}><Bookmark size={21}/><span>Saved</span></button>
+        <button type="button" className={view === 'settings' ? 'selected' : ''} onClick={() => setView('settings')}><Settings2 size={21}/><span>Settings</span></button>
       </nav>
 
       {selected && <ImageDetail image={selected} isSaved={isSaved(selected.id)} onClose={closeDetail} onNext={nextDetail} onPrevious={previousDetail}
