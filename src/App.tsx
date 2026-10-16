@@ -5,6 +5,7 @@ import { ImageDetail } from './components/ImageDetail'
 import { SettingsPage } from './components/SettingsPage'
 import { useThemeMode } from './hooks/useThemeMode'
 import { hasEuropeanaKey } from './services/apiKeys'
+import { downloadOriginalImage } from './services/downloadImage'
 import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
@@ -37,6 +38,7 @@ export default function App() {
   const [orientation, setOrientation] = useState<Orientation>('all')
   const [detailId, setDetailId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [refresh, setRefresh] = useState(0)
   const [source, setSource] = useState<ImageSource>('all')
   const keyboardOpen = useSoftwareKeyboard()
@@ -71,7 +73,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const timeout = window.setTimeout(() => setToast(null), 2600)
+    const timeout = window.setTimeout(() => setToast(null), 5000)
     return () => window.clearTimeout(timeout)
   }, [toast])
 
@@ -114,6 +116,19 @@ export default function App() {
       return visible.length ? visible[(index - 1 + visible.length) % visible.length].id : null
     })
   }, [visible])
+
+  async function startImageDownload(image: ImageResult) {
+    if (downloadingId !== null) return
+    setDownloadingId(image.id)
+    try {
+      const filename = await downloadOriginalImage(image)
+      setToast('Download started: ' + filename)
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Image download failed. Open the original image instead.')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
 
   async function copyImageUrl(url: string) {
     try {
@@ -201,6 +216,9 @@ export default function App() {
         </div> : visible.length > 0 ? <div className="masonry">
           {visible.map((item) => <ImageTile key={item.id} item={item} isSaved={isSaved(item.id)}
             onOpen={() => setDetailId(item.id)}
+            onDownload={() => void startImageDownload(item)}
+            isDownloading={downloadingId === item.id}
+            downloadBusy={downloadingId !== null}
             onToggleSaved={() => { toggleSaved(item); setToast(isSaved(item.id) ? 'Removed from saved' : 'Added to saved') }}/>)}
         </div> : !error && <div className="empty-panel">
           <div className="empty-icon"><Images size={30}/></div>
@@ -229,7 +247,10 @@ export default function App() {
 
       {selected && <ImageDetail image={selected} isSaved={isSaved(selected.id)} onClose={closeDetail} onNext={nextDetail} onPrevious={previousDetail}
         onToggleSaved={() => { toggleSaved(selected); setToast(isSaved(selected.id) ? 'Removed from saved' : 'Added to saved') }}
-        onCopy={() => void copyImageUrl(selected.url)} />}
+        onCopy={() => void copyImageUrl(selected.url)}
+        onDownload={() => void startImageDownload(selected)}
+        isDownloading={downloadingId === selected.id}
+        downloadBusy={downloadingId !== null} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   )
