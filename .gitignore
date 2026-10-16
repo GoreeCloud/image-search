@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+src-tauri/target/
+src-tauri/gen/
+src-tauri/.tauri/
+*.apk
+*.aab
+*.deb
+*.AppImage
+.DS_Store

@@ -1,0 +1,16 @@
+[package]
+name = "image-search"
+version = "0.1.0"
+description = "GoreeCloud Image Search"
+authors = ["GoreeCloud"]
+edition = "2021"
+
+[lib]
+name = "image_search_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
