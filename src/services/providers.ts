@@ -7,7 +7,7 @@ import { searchCma } from './cleveland'
 import { searchMet } from './met'
 import { searchEuropeana } from './europeana'
 import { searchWikipedia } from './wikipedia'
-import { searchWebImages, hasWebImageEndpoint } from './webImages'
+import { searchWebImages } from './webImages'
 import { hasEuropeanaKey } from './apiKeys'
 
 export const SOURCE_SEARCH = { web: searchWebImages, openverse: searchOpenverse, wikipedia: searchWikipedia, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, europeana: searchEuropeana }
@@ -29,8 +29,7 @@ export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
 }
 
 export async function searchAllSources(query: string, cursor: string | null, signal?: AbortSignal): Promise<SearchPage> {
-  const sources = (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s =>
-    (s !== 'europeana' || hasEuropeanaKey()) && (s !== 'web' || hasWebImageEndpoint()))
+  const sources = (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s => s !== 'europeana' || hasEuropeanaKey())
   let cursors: MultiCursor
   if (cursor === null) cursors = Object.fromEntries(sources.map(s => [s, ''])) as MultiCursor
   else {
@@ -55,9 +54,12 @@ export async function searchAllSources(query: string, cursor: string | null, sig
   if (!succeeded.length) throw new Error('Image sources are temporarily unavailable. Try an individual source.')
   const next: MultiCursor = {}
   for (const s of succeeded) next[s.value.source] = s.value.page.cursor
-  responses.forEach((r, index) => { if (r.status === 'rejected') next[active[index]] = cursors[active[index]] })
+  // Do not indefinitely paginate an unavailable service; refresh re-enables it.
+  const unavailableSources = responses.flatMap((r,index) => r.status === 'rejected' ? [active[index]] : [])
+  unavailableSources.forEach(s => { next[s] = null })
   return {
     items: uniqueImages(succeeded.flatMap(r => r.value.page.items)),
     cursor: Object.values(next).some(value => typeof value === 'string') ? JSON.stringify(next) : null,
+    unavailableSources,
   }
 }
