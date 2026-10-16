@@ -222,3 +222,7 @@ h1 em { font-style: normal; color: #bfafff; }
 @media (prefers-reduced-motion: reduce) {
   .tile-copyright, .preview-copyright { transition: none; }
 }
+
+/* Inline retry for a failed first-party web-image backend. */
+.source-retry { margin-left: 10px; padding: 5px 10px; border: 1px solid currentColor; border-radius: 7px; background: transparent; color: inherit; font-size: inherit; font-weight: 650; }
+.source-retry:hover { background: #ffffff1b; }
