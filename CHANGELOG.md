@@ -1,3 +1,10 @@
+## Unreleased — built-in GoreeCloud Search and copyright caution
+
+- Activate first-party GoreeCloud Search general-web image federation by default, using POST requests rather than manually configured third-party SearXNG instances.
+- Keep public image collections working if the first-party backend is offline; surface a truthful retry status.
+- Add a visible © glyph to image tiles and previews when reuse rights are not explicitly public domain/CC0.
+- Record the separate GoreeCloud Search backend image-engine development profile and deployment gate.
+
 ## Unreleased — broader image search
 
 - Add Wikipedia article images; keep Art Institute behind a provider compatibility gate until CDN previews work.
