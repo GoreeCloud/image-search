@@ -109,34 +109,45 @@ limited to its official CDN. These sources are not unrestricted web crawlers.
 
 Android QA: On Android 10+, downloads now use native MediaStore to save to the public Downloads folder; only a finalized file triggers success. Physical-device verification is required before release.
 
-## Expanded image discovery (development)
+## Native GoreeCloud Search image integration (development)
 
-Seven keyless sources now feed **All sources**, including newly supported
-Wikipedia article lead images. The search input normalizes common technology-name variations such
-as `Samsung OneUI` to `Samsung One UI` when querying providers.
+**GoreeCloud Search** is the default general-web image source. Its client
+adapter is built directly into the web, Linux, and Android Image Search app;
+users do not enter SearXNG URLs or connect third-party instances. The backend
+is GoreeCloud's SearXNG fork, deployed as a separately managed first-party
+service (not a Python server embedded in the APK).
 
-**Optional broader web search:** Settings → API → Broader Web Images accepts a
-trusted HTTPS SearXNG address. Your own SearXNG instance must enable JSON image
-results, CORS access to the app's origin, and image engines. When connected,
-web images join the federated results (with web results prioritized) and can
-be selected independently in the Source filter. A connected service can search
-across multiple upstream engines; the actual coverage depends on its configured
-engines and their accessibility. This feature is not a claim of Google Images
-coverage, and it does not scrape Google or use Google private endpoints.
+All sources queries automatically include GoreeCloud Search plus seven public
+collections: Openverse, Wikimedia Commons, Wikipedia article images, NASA,
+Library of Congress, Cleveland Museum of Art, and The Met. Europeana remains
+optional with a session API key. Technology queries such as
+`Samsung OneUI` normalize to `Samsung One UI`, prioritizing Commons and
+Wikipedia screenshots, and deduplicating identical original-image URLs.
 
-The SearXNG connection is opt-in and held in memory for this app session only.
-Search terms are sent to the selected instance; previews from remote websites
-may disclose the viewer's IP address to those sites. Web result licensing and
-attribution vary, so follow the linked source and verify rights before reuse.
-Only public HTTPS hostnames are accepted for the SearXNG endpoint; anonymous
-third-party public instances may disable JSON output or CORS. No private API
-key is requested. If the web endpoint fails, other federated providers remain
-usable.
+The intended first-party service URL is
+`https://search.goreecloud.com/search`. **DNS and deployment are not yet
+verified**; this URL is a target and not a claim that the backend is online.
+Release builds may set `VITE_GOREECLOUD_SEARCH_IMAGES_URL` to an approved
+first-party HTTPS `/search` endpoint. The adapter uses POST form data with
+`q`, `categories=images`, `format=json`, `pageno`, and `safesearch=1`;
+it does not include query terms in the URL, credentials, or a referrer.
+Cross-origin web/PWA access requires the GoreeCloud reverse proxy to enable
+restricted CORS for the appropriate app origin. The fork's isolated private
+image-engine profile is kept separate from its existing two-provider web
+search configuration.
 
-The native shell permits HTTPS image thumbnails and HTTPS connections to allow
-user-selected web endpoints. Unlike the preexisting keyless source thumbnails,
-web results can load from third-party media domains. See the new provider
-normalization/validation and regression tests under `src/services`.
+When GoreeCloud Search is offline, image search still returns the public
+collections and displays an explicit availability message and Retry.
+GoreeCloud Search's availability and breadth depend on the deployed backend,
+its configured engines and upstream access; Google Images parity is not
+guaranteed and no unapproved scraping bypass is implied.
+
+**Copyright indicator:** A persistent © caution appears on masonry tiles
+and previews whenever public-domain or CC0 status is not explicit, including
+web images and Creative Commons attribution licenses. The symbol means
+reuse rights **may** apply; it is not a determination of ownership. View
+original sources for definitive terms. Thumbnails may be requested from
+third-party origins; this can disclose client IP addresses to those hosts.
 
 ### Candidate provider held back
 
