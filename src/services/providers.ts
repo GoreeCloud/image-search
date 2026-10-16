@@ -7,11 +7,10 @@ import { searchCma } from './cleveland'
 import { searchMet } from './met'
 import { searchEuropeana } from './europeana'
 import { searchWikipedia } from './wikipedia'
-import { searchArtic } from './artic'
 import { searchWebImages, hasWebImageEndpoint } from './webImages'
 import { hasEuropeanaKey } from './apiKeys'
 
-export const SOURCE_SEARCH = { web: searchWebImages, openverse: searchOpenverse, wikipedia: searchWikipedia, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, artic: searchArtic, europeana: searchEuropeana }
+export const SOURCE_SEARCH = { web: searchWebImages, openverse: searchOpenverse, wikipedia: searchWikipedia, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, europeana: searchEuropeana }
 export type SingleSource = keyof typeof SOURCE_SEARCH
 export type ImageSource = SingleSource | 'all'
 type MultiCursor = Partial<Record<SingleSource, string | null>>
