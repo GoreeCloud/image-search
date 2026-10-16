@@ -11,6 +11,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [unavailableSources, setUnavailableSources] = useState<string[]>([])
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [cursor, setCursor] = useState<string | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
@@ -26,6 +27,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     setImages([])
     setCursor(null)
     setError(null)
+    setUnavailableSources([])
     setLoadMoreError(null)
     setLoading(true)
     setLoadingMore(false)
@@ -34,6 +36,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
       .then((result) => {
         if (controller.signal.aborted || request !== requestRef.current) return
         setImages(uniqueImages(result.items))
+        setUnavailableSources(result.unavailableSources || [])
         setCursor(result.cursor)
       })
       .catch((reason: unknown) => {
@@ -59,6 +62,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
         return uniqueImages([...prev, ...result.items])
       })
       setCursor(result.cursor)
+      setUnavailableSources(old => [...new Set([...old, ...(result.unavailableSources || [])])])
     } catch (reason) {
       if (request === requestRef.current && !controllerRef.current?.signal.aborted) {
         setLoadMoreError(reason instanceof Error ? reason.message : 'Could not load more images.')
@@ -71,5 +75,5 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     }
   }, [cursor, error, loading, loadingMore, query, normalizedQuery, source])
 
-  return { images, loading, loadingMore, error, loadMoreError, hasMore: Boolean(cursor), loadMore }
+  return { images, loading, loadingMore, unavailableSources, error, loadMoreError, hasMore: Boolean(cursor), loadMore }
 }
