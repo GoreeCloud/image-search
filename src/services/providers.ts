@@ -3,8 +3,9 @@ import { searchOpenverse } from './openverse'
 import { searchCommons } from './commons'
 import { searchLoC } from './loc'
 import { searchNasa } from './nasa'
+import { searchCma } from './cleveland'
 
-export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa }
+export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma }
 export type SingleSource = keyof typeof SOURCE_SEARCH
 export type ImageSource = SingleSource | 'all'
 type MultiCursor = Partial<Record<SingleSource, string | null>>
