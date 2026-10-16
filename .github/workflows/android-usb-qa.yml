@@ -31,8 +31,11 @@ jobs:
         with:
           workspaces: src-tauri
       - run: npm ci
+      - name: Prepare per-run isolated QA package identity
+        run: |
+          node -e "const fs = require('fs'); const cfg = JSON.parse(fs.readFileSync('src-tauri/tauri.qa.conf.json', 'utf8')); cfg.identifier += process.env.GITHUB_RUN_ID; fs.writeFileSync('src-tauri/tauri.qa.run.json', JSON.stringify(cfg)); console.log('Isolated QA package:', cfg.identifier);"
       - name: Generate isolated Android package
-        run: npm run tauri -- android init --config src-tauri/tauri.qa.conf.json --ci
+        run: npm run tauri -- android init --config src-tauri/tauri.qa.run.json --ci
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
       - name: Apply inset handling under QA package
@@ -40,17 +43,17 @@ jobs:
           bash scripts/prepare-android.sh
           ACTIVITY=$(find src-tauri/gen/android/app/src/main/java -name MainActivity.kt -print -quit)
           test -n "$ACTIVITY"
-          sed -i 's/^package com\.goreecloud\.imagesearch$/package com.goreecloud.imagesearch.qa/' "$ACTIVITY"
-          grep -F 'package com.goreecloud.imagesearch.qa' "$ACTIVITY"
+          sed -i "s/^package com\.goreecloud\.imagesearch$/package com.goreecloud.imagesearch.qa${GITHUB_RUN_ID}/" "$ACTIVITY"
+          grep -F "package com.goreecloud.imagesearch.qa${GITHUB_RUN_ID}" "$ACTIVITY"
       - name: Build QA APK
-        run: npm run tauri -- android build --debug --target aarch64 --config src-tauri/tauri.qa.conf.json --ci
+        run: npm run tauri -- android build --debug --target aarch64 --config src-tauri/tauri.qa.run.json --ci
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
       - name: Verify QA package and certificate
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
           test -n "$APK" && test -s "$APK"
-          EXPECTED_PACKAGE=com.goreecloud.imagesearch.qa \
+          EXPECTED_PACKAGE="com.goreecloud.imagesearch.qa${GITHUB_RUN_ID}" \
             AAPT_BIN="${ANDROID_HOME}/build-tools/35.0.0/aapt" \
             APKSIGNER_BIN="${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
             bash scripts/verify-android-apk.sh "$APK"
