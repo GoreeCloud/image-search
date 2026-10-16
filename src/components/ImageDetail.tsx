@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, ExternalLink, X } from 'lucide-react'
+import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, LoaderCircle, X } from 'lucide-react'
 import type { ImageResult } from '../types'
 import { trustedImageFallback } from '../services/imageFallback'
 
@@ -11,9 +11,12 @@ type Props = {
   onPrevious: () => void
   onToggleSaved: () => void
   onCopy: () => void
+  onDownload: () => void
+  isDownloading: boolean
+  downloadBusy: boolean
 }
 
-export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onToggleSaved, onCopy }: Props) {
+export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onToggleSaved, onCopy, onDownload, isDownloading, downloadBusy }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [previewUrl, setPreviewUrl] = useState(image.thumbnailUrl)
@@ -83,6 +86,11 @@ export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onTog
             <h2>{image.title}</h2>
             <p className="detail-description">{image.description || 'View source details and licensing information for this image.'}</p>
             <div className="detail-actions">
+              <button type="button" className="detail-download" onClick={onDownload} disabled={downloadBusy}
+                aria-label={isDownloading ? 'Downloading original image' : 'Download original image'}>
+                {isDownloading ? <LoaderCircle size={18} className="download-spinner" /> : <Download size={18} />}
+                {isDownloading ? 'Downloading…' : 'Download image'}
+              </button>
               <button type="button" className={`detail-save ${isSaved ? 'active' : ''}`} onClick={onToggleSaved}>
                 <Bookmark size={18} fill={isSaved ? 'currentColor' : 'none'} />
                 {isSaved ? 'Saved' : 'Save image'}
