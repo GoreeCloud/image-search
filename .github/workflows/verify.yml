@@ -41,6 +41,15 @@ jobs:
           workspaces: src-tauri
       - run: npm ci
       - run: npm run tauri -- build
+      - name: Verify native Linux package integrity
+        run: |
+          DEB=$(find src-tauri/target/release/bundle/deb -name '*.deb' -print -quit)
+          APPIMAGE=$(find src-tauri/target/release/bundle/appimage -name '*.AppImage' -print -quit)
+          test -n "$DEB" && test -s "$DEB"
+          test -n "$APPIMAGE" && test -s "$APPIMAGE"
+          dpkg-deb --field "$DEB" Package Architecture Version
+          dpkg-deb --contents "$DEB" | grep -F 'usr/bin/image-search'
+          file "$APPIMAGE"
       - uses: actions/upload-artifact@v4
         with:
           name: image-search-linux
@@ -82,6 +91,12 @@ jobs:
       - run: npm run tauri -- android build --debug --target aarch64
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+      - name: Verify Android debug APK integrity
+        run: |
+          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$APK" && test -s "$APK"
+          unzip -tq "$APK"
+          "${ANDROID_HOME}/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F 'com.goreecloud.imagesearch'
       - uses: actions/upload-artifact@v4
         with:
           name: image-search-android-debug
