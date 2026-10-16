@@ -40,6 +40,15 @@ describe('image source safety', () => {
     expect(fetcher.mock.calls[1][0]).toContain('gsrcontinue=next')
   })
 
+  it('ignores malformed license metadata without discarding valid images', () => {
+    const img = normalizePage({pageid: 18, title: 'File:Cloud.jpg', imageinfo: [{
+      url: 'https://upload.wikimedia.org/cloud.jpg',
+      extmetadata: {LicenseUrl: {value: 'not a URL'}},
+    }]})
+    expect(img?.licenseUrl).toBeNull()
+    expect(img?.id).toBe('commons:18')
+  })
+
   it('handles source errors without leaking response payloads', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }))
     await expect(searchCommons('cats', null)).rejects.toThrow('busy')

@@ -1,4 +1,5 @@
 import type { ImageResult, SearchPage } from '../types'
+import { fetchWithTimeout } from './network'
 
 const API = 'https://api.openverse.org/v1/images/'
 type OpenverseImage = {
@@ -72,9 +73,7 @@ export async function searchOpenverse(
   const params = new URLSearchParams({
     q: query, page: String(page), page_size: '20', mature: 'false',
   })
-  const response = await fetch(`${API}?${params.toString()}`, {
-    signal, headers: { Accept: 'application/json' },
-  })
+  const response = await fetchWithTimeout(`${API}?${params.toString()}`, signal)
   if (!response.ok) {
     if (response.status === 429) throw new Error('Openverse request limit reached. Try Commons or come back later.')
     throw new Error(`Openverse is unavailable (HTTP ${response.status}).`)

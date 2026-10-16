@@ -36,7 +36,7 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
-  const { images, loading, loadingMore, error, hasMore, loadMore } = useImageSearch(query, refresh, source)
+  const { images, loading, loadingMore, error, loadMoreError, hasMore, loadMore } = useImageSearch(query, refresh, source)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
   const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
   const currentIndex = visible.findIndex((item) => item.id === detailId)
@@ -44,11 +44,11 @@ export default function App() {
 
   useEffect(() => {
     const node = sentinel.current
-    if (!node || view !== 'explore' || !hasMore || error || loading) return
+    if (!node || view !== 'explore' || !hasMore || error || loadMoreError || loading) return
     const observer = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) void loadMore() }, { rootMargin: '800px' })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loadMore, view, hasMore, error, loading])
+  }, [loadMore, view, hasMore, error, loadMoreError, loading])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -189,6 +189,10 @@ export default function App() {
         </div>}
 
         <div ref={sentinel} className="scroll-sentinel" />
+        {view === 'explore' && loadMoreError && <div className="more-error" role="alert">
+          <span>Couldn't load the next page. {loadMoreError}</span>
+          <button type="button" onClick={() => void loadMore()}><RotateCcw size={15}/> Retry</button>
+        </div>}
         {view === 'explore' && !loading && !error && hasMore && <div className="load-row">
           <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? 'Finding more images…' : 'Explore more'} <ArrowDown size={16} /></button>
         </div>}
