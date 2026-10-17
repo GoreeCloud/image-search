@@ -2,9 +2,11 @@ package com.goreecloud.imagesearch
 
 import android.app.Activity
 import android.content.ContentValues
+import android.graphics.Color
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.core.view.WindowInsetsControllerCompat
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
@@ -28,6 +30,36 @@ class ImageSaveArgs {
  * into the public Downloads collection on many Android devices.
  * No storage permission is required for app-created Downloads on Android 10+.
  */
+/**
+ * Shared native bar styling. Keep this in the stable plugin package: the QA
+ * MainActivity is repackaged for each CI run while this plugin is not.
+ */
+object AndroidSystemBars {
+    fun apply(activity: Activity, mode: String) {
+        val light = mode == "light"
+        val background = Color.parseColor(if (light) "#faf9fc" else "#0e0f12")
+        val window = activity.window
+        window.decorView.setBackgroundColor(background)
+        @Suppress("DEPRECATION")
+        window.statusBarColor = background
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = background
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
+    }
+}
+
+@InvokeArg
+class SystemBarsArgs {
+    lateinit var theme: String
+}
+
 @TauriPlugin
 class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
     companion object {
@@ -43,6 +75,27 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             "image/heic" to "heic",
             "image/heif" to "heif"
         )
+    }
+
+    @Command
+    fun setSystemBars(invoke: Invoke) {
+        val args = try { invoke.parseArgs(SystemBarsArgs::class.java) }
+        catch (_: Exception) {
+            invoke.reject("Invalid appearance settings.")
+            return
+        }
+        if (args.theme != "light" && args.theme != "dark") {
+            invoke.reject("Unsupported appearance mode.")
+            return
+        }
+        activity.runOnUiThread {
+            try {
+                AndroidSystemBars.apply(activity, args.theme)
+                invoke.resolve(JSObject().apply { put("theme", args.theme) })
+            } catch (error: Exception) {
+                invoke.reject(error.message ?: "Could not update Android system bars.")
+            }
+        }
     }
 
     @Command
