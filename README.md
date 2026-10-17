@@ -157,3 +157,13 @@ returned HTTP 403 with a Cloudflare challenge to our development environment.
 The adapter prototype in `src/services/artic.ts` is deliberately **not registered**
 as a live search provider; it must not be advertised as functioning or included
 in source counts until real preview requests pass on supported platforms.
+
+### Compact image tile actions
+
+Each masonry tile now has one persistent three-dot action button rather than
+separate Download, Save, and rights overlays. Opening it exposes Download,
+Save / Remove saved, View original source, and Copyright & license. The ©
+caution is a small badge on the same button whenever reuse rights are not
+confirmed public domain or CC0. The full-size image can still be opened by
+tapping the thumbnail. The menu supports outside-tap and Escape dismissal,
+keyboard arrow/Home/End navigation, and accessible labels, including mobile.
