@@ -2,6 +2,7 @@ package com.goreecloud.imagesearch
 
 import android.os.Bundle
 import android.view.View
+import com.goreecloud.imagesearch.AndroidSystemBars
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,6 +16,10 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Light on first launch; persisted dark preference is applied by the web bridge.
+        val saved = getSharedPreferences("image-search.appearance.v1", MODE_PRIVATE)
+            .getString("theme", "light") ?: "light"
+        AndroidSystemBars.apply(this, saved)
         val container = findViewById<View>(android.R.id.content)
         ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
             val types = WindowInsetsCompat.Type.systemBars() or
