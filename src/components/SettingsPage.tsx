@@ -35,6 +35,7 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
     onApiChange()
   }
 
+
   return (
     <section className="settings-page" aria-label="Image Search settings">
       <div className="settings-heading">
@@ -55,7 +56,7 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
       <section className="settings-card" id="api-settings" aria-labelledby="api-heading">
         <div className="settings-card-heading">
           <h2 id="api-heading"><KeyRound size={19}/> API</h2>
-          <p>Connect optional image services. Free public collections work without keys.</p>
+          <p>GoreeCloud Search images are built in. Optional heritage providers can be connected separately.</p>
         </div>
         <div className="provider-row">
           <div>
@@ -78,6 +79,14 @@ export function SettingsPage({ theme, onThemeChange, onApiChange }: Props) {
         </form>
         {notice && <p role="status" className="api-notice">{notice}</p>}
         <p className="api-privacy" id="api-privacy"><LockKeyhole size={15}/> Keys stay in this app session's memory and are not saved to disk or included in image URLs. The key is sent only to the chosen provider as an X-Api-Key header. Use a personal key only for personal exploration; services require provider-approved project keys. Closing or reloading the app clears it. Use a provider-issued key intended for client applications; never paste private server secrets.</p>
+        <div className="provider-row">
+          <div>
+            <strong>GoreeCloud Search · General-web images</strong>
+            <p>Built into Image Search and included in every All sources search. Powered by GoreeCloud's SearXNG-based search backend; no third-party server address or personal API key is required. Coverage depends on the GoreeCloud Search service and its available image engines.</p>
+          </div>
+          <span className="provider-status">Enabled by default</span>
+        </div>
+        <p className="api-privacy"><LockKeyhole size={15}/> Search terms are sent to the first-party GoreeCloud Search endpoint when available. Image thumbnails can load from their originating websites. Copyright restrictions may apply; the image grid displays a copyright caution for images without verified public-domain rights. If GoreeCloud Search is unavailable, the free image collections still work.</p>
         <p className="api-privacy">Connected providers are included in “All sources.” If a provider fails or reaches its API limit, the other sources remain usable.</p>
       </section>
     </section>

@@ -36,6 +36,30 @@ async fn save_image_android(
     }
 }
 
+/// Propagate the selected appearance to Android's native system UI.
+#[tauri::command]
+async fn set_system_bars_android(app: tauri::AppHandle, theme: String) -> Result<(), String> {
+    if theme != "light" && theme != "dark" {
+        return Err("Unsupported appearance mode.".to_owned());
+    }
+    #[cfg(target_os = "android")]
+    {
+        use tauri::Manager;
+        let plugin = app.state::<AndroidImageDownload>();
+        let _: serde_json::Value = plugin
+            .0
+            .run_mobile_plugin_async("setSystemBars", serde_json::json!({ "theme": theme }))
+            .await
+            .map_err(|error| format!("Could not update Android system bars: {error}"))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "android"))]
+    {
+        let _ = app;
+        Err("System bar controls are available only on Android.".to_owned())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -57,7 +81,7 @@ pub fn run() {
                 })
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![save_image_android])
+        .invoke_handler(tauri::generate_handler![save_image_android, set_system_bars_android])
         .run(tauri::generate_context!())
         .expect("error while running Image Search");
 }

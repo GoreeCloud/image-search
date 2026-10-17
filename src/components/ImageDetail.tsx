@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, LoaderCircle, X } from 'lucide-react'
+import { ArrowUpRight, Bookmark, ChevronLeft, ChevronRight, Copy, Copyright, Download, ExternalLink, LoaderCircle, X } from 'lucide-react'
 import type { ImageResult } from '../types'
+import { showCopyrightNotice } from '../services/imageRights'
 import { trustedImageFallback } from '../services/imageFallback'
 
 type Props = {
@@ -79,6 +80,10 @@ export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onTog
             {previewFailed
               ? <div className="preview-failed" role="status">Image preview unavailable. Use the original source link for this image.</div>
               : <img src={previewUrl} alt={image.title} referrerPolicy="no-referrer" onError={onPreviewError} />}
+            {!previewFailed && showCopyrightNotice(image) && (
+              <span className="preview-copyright" role="img" aria-label="Copyright or reuse restrictions may apply. Check original source."
+                title="Copyright or reuse restrictions may apply · check source"><Copyright size={19} /></span>
+            )}
             <button type="button" className="preview-arrow right" onClick={onNext} aria-label="Next image"><ChevronRight size={23}/></button>
           </div>
           <aside className="detail-panel">
