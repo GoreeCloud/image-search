@@ -47,25 +47,35 @@ function safeUrl(input: unknown, allowRelative = false): string | null {
     return url.href
   } catch { return null }
 }
-export function normalizeWebImage(record: WebRecord, index: number, page: number): ImageResult | null {
-  const original = safeUrl(record.img_src)
-  const sourceUrl = safeUrl(record.url)
-  const thumbnail = safeUrl(record.thumbnail_src || record.thumbnail, true) || original
+/** Provider JSON is untrusted even when the HTTP response is valid. */
+export function normalizeWebImage(record: unknown, index: number, page: number): ImageResult | null {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return null
+  const row = record as Record<string, unknown>
+  const original = safeUrl(row.img_src)
+  const sourceUrl = safeUrl(row.url)
+  const thumbnail = safeUrl(row.thumbnail_src, true) || safeUrl(row.thumbnail, true) || original
   if (!original || !sourceUrl || !thumbnail) return null
-  const dimensions = /^(\d{1,5})\s*[x×]\s*(\d{1,5})$/i.exec(record.resolution || '')
+
+  const text = (value: unknown, fallback: string, maxLength: number): string =>
+    typeof value === 'string' ? (value.trim().slice(0, maxLength) || fallback) : fallback
+  const resolution = typeof row.resolution === 'string' ? row.resolution : ''
+  const dimensions = /^(\d{1,5})\s*[x×]\s*(\d{1,5})$/i.exec(resolution)
+  const width = dimensions ? Number(dimensions[1]) : 0
+  const height = dimensions ? Number(dimensions[2]) : 0
+  const engine = text(row.engine, '', 36)
   return {
     id: `goreecloud-search:${page}:${index}:${original}`,
-    title: (record.title || 'Web image').slice(0, 180),
+    title: text(row.title, 'Web image', 180),
     url: original,
     thumbnailUrl: thumbnail,
     sourceUrl,
-    description: (record.content || '').replace(/<[^>]+>/g, ' ').slice(0, 320),
-    creator: (record.author || record.source || record.engine || 'See original website').slice(0, 180),
+    description: text(row.content, '', 320).replace(/<[^>]+>/g, ' '),
+    creator: text(row.author, '', 180) || text(row.source, '', 180) || engine || 'See original website',
     license: 'Web result · rights unverified',
     licenseUrl: sourceUrl,
-    width: dimensions ? Number(dimensions[1]) : 900,
-    height: dimensions ? Number(dimensions[2]) : 700,
-    provider: record.engine ? `GoreeCloud Search · ${record.engine.slice(0, 36)}` : 'GoreeCloud Search',
+    width: width > 0 ? width : 900,
+    height: height > 0 ? height : 700,
+    provider: engine ? `GoreeCloud Search · ${engine}` : 'GoreeCloud Search',
   }
 }
 
@@ -104,7 +114,9 @@ export async function searchWebImages(term: string, cursor: string | null, signa
   let payload: WebResponse
   try { payload = await response.json() as WebResponse }
   catch { throw new Error('GoreeCloud Search did not return valid JSON image results.') }
-  if (!Array.isArray(payload.results)) throw new Error('GoreeCloud Search returned an invalid image response.')
+  if (!payload || typeof payload !== 'object' || !Array.isArray(payload.results)) {
+    throw new Error('GoreeCloud Search returned an invalid image response.')
+  }
   const items = payload.results.slice(0, 60)
     .map((record, index) => normalizeWebImage(record, index, page))
     .filter((item): item is ImageResult => item !== null)
