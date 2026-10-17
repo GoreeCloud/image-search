@@ -49,6 +49,7 @@ jobs:
         run: npm run tauri -- android build --debug --target aarch64 --config src-tauri/tauri.qa.run.json --ci
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+          RUSTFLAGS: '-C link-arg=-Wl,-z,max-page-size=16384'
       - name: Verify QA package and certificate
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
