@@ -41,6 +41,7 @@ afterEach(async () => {
   host.remove()
   onOpen.mockClear(); onDownload.mockClear(); onToggleSaved.mockClear()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('single image actions menu', () => {
@@ -102,6 +103,18 @@ describe('single image actions menu', () => {
     expect(document.activeElement).toBe(links[3])
     await act(async () => menu!.dispatchEvent(new KeyboardEvent('keydown', {key:'Home',bubbles:true})))
     expect(document.activeElement).toBe(links[0])
+  })
+
+
+  it('opens upward when the trigger is too close to the bottom of the viewport', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 700, 40, 40))
+    await render()
+    await click('Image actions for Samsung One UI')
+    expect(host.querySelector('.tile-menu-above .tile-actions-menu')).not.toBeNull()
+    await click('Image actions for Samsung One UI')
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 20, 40, 40))
+    await click('Image actions for Samsung One UI')
+    expect(host.querySelector('.tile-menu-above .tile-actions-menu')).toBeNull()
   })
 
   it('does not show a copyright badge for CC0, and disables download while busy', async () => {
