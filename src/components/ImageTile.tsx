@@ -105,12 +105,12 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
           </span>}
         </div>
       </button>
+      {!failed && showCopyrightNotice(item) && <span className="tile-copyright" role="img" aria-label="Reuse rights may apply" title="Check license at original source"><Copyright size={16}/></span>}
       <div className="tile-menu-root" ref={menuRoot}>
         <button ref={trigger} type="button" className="tile-menu-trigger"
           aria-label={`Image actions for ${item.title}`} aria-haspopup="menu" aria-expanded={menuOpen}
           onClick={toggleMenu}>
           <MoreVertical size={19}/>
-          {showCopyrightNotice(item) && <span aria-hidden="true" className="tile-menu-rights">©</span>}
         </button>
         {menuOpen && <div className="tile-actions-menu" role="menu" onKeyDown={onMenuKeyDown} aria-label={`Actions for ${item.title}`}>
           <button ref={firstItem} type="button" role="menuitem" disabled={downloadBusy} onClick={() => action(onDownload)}>
