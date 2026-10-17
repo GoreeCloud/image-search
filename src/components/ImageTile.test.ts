@@ -88,6 +88,22 @@ describe('single image actions menu', () => {
     expect(onOpen).toHaveBeenCalledOnce()
   })
 
+
+  it('supports arrow-key and Home/End navigation in the menu', async () => {
+    await render()
+    await click('Image actions for Samsung One UI')
+    const menu = host.querySelector('[role="menu"]')
+    expect(menu).not.toBeNull()
+    const links = menu!.querySelectorAll('[role="menuitem"]')
+    expect(document.activeElement).toBe(links[0])
+    await act(async () => menu!.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown',bubbles:true})))
+    expect(document.activeElement).toBe(links[1])
+    await act(async () => menu!.dispatchEvent(new KeyboardEvent('keydown', {key:'End',bubbles:true})))
+    expect(document.activeElement).toBe(links[3])
+    await act(async () => menu!.dispatchEvent(new KeyboardEvent('keydown', {key:'Home',bubbles:true})))
+    expect(document.activeElement).toBe(links[0])
+  })
+
   it('does not show a copyright badge for CC0, and disables download while busy', async () => {
     await render(false, 'CC0 · Open Access', true)
     expect(host.querySelector('.tile-menu-rights')).toBeNull()
