@@ -84,3 +84,15 @@ it('keeps curated results and marks the web source unavailable if its service is
   expect(page.unavailableSources).toContain('web')
   expect(page.cursor).toBeNull()
 })
+
+it('stops pagination for providers returning the same cursor repeatedly', async () => {
+  for (const mock of [searchWebImages, searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet, searchWikipedia]) {
+    vi.mocked(mock).mockResolvedValue({ items: [], cursor: null })
+  }
+  vi.mocked(searchOpenverse).mockResolvedValue({ items: [image], cursor: '2' })
+  const first = await searchAllSources('nature', null)
+  expect(first.cursor).toContain('openverse')
+  const second = await searchAllSources('nature', first.cursor)
+  expect(second.cursor).toBeNull()
+  expect(searchOpenverse).toHaveBeenLastCalledWith('nature', '2', undefined)
+})

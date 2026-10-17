@@ -53,7 +53,13 @@ export async function searchAllSources(query: string, cursor: string | null, sig
   const succeeded = responses.filter((r): r is PromiseFulfilledResult<{source: SingleSource; page: SearchPage}> => r.status === 'fulfilled')
   if (!succeeded.length) throw new Error('Image sources are temporarily unavailable. Try an individual source.')
   const next: MultiCursor = {}
-  for (const s of succeeded) next[s.value.source] = s.value.page.cursor
+  for (const s of succeeded) {
+    const source = s.value.source
+    const nextCursor = s.value.page.cursor
+    // A provider repeating its current page cursor must not cause an infinite
+    // load-more loop (or drain mobile data while the gallery never advances).
+    next[source] = nextCursor && nextCursor !== (cursors[source] || null) ? nextCursor : null
+  }
   // Do not indefinitely paginate an unavailable service; refresh re-enables it.
   const unavailableSources = responses.flatMap((r,index) => r.status === 'rejected' ? [active[index]] : [])
   unavailableSources.forEach(s => { next[s] = null })
