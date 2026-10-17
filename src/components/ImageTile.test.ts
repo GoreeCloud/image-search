@@ -48,8 +48,8 @@ describe('single image actions menu', () => {
   it('renders one overlay button with a visible rights badge and no separate download/save controls', async () => {
     await render()
     expect(host.querySelectorAll('.tile-menu-trigger')).toHaveLength(1)
-    expect(host.querySelectorAll('.tile-download,.tile-save,.tile-copyright')).toHaveLength(0)
-    expect(host.querySelector('.tile-menu-rights')?.textContent).toBe('©')
+    expect(host.querySelectorAll('.tile-download,.tile-save,.tile-menu-rights')).toHaveLength(0)
+    expect(host.querySelector('.tile-copyright')).not.toBeNull()
     expect(host.querySelector('[role="menu"]')).toBeNull()
     await click('Image actions for Samsung One UI')
     const menu = host.querySelector('[role="menu"]')
@@ -119,7 +119,7 @@ describe('single image actions menu', () => {
 
   it('does not show a copyright badge for CC0, and disables download while busy', async () => {
     await render(false, 'CC0 · Open Access', true)
-    expect(host.querySelector('.tile-menu-rights')).toBeNull()
+    expect(host.querySelector('.tile-copyright')).toBeNull()
     await click('Image actions for Samsung One UI')
     expect(button('Downloading…').disabled).toBe(true)
     expect(host.textContent).toContain('Public domain / CC0 reported')

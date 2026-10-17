@@ -9,7 +9,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
-- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
+- Light-first Glaze styling with an optional dark theme, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
@@ -87,7 +87,7 @@ Copyright (C) 2026 GoreeCloud. Original GoreeCloud Image Search source code is l
 
 On mobile, **Settings** sits beside Explore and Saved in the bottom dock; on
 desktop it is in the main navigation. Settings > **Appearance** lets you choose
-Dark or Light Mode. Only the theme preference is stored locally.
+Light or Dark Mode. New installations default to Light; explicit theme choices are remembered locally. On Android, both status and navigation bars also switch background and icon contrast to match the chosen mode.
 
 **Settings > API** supports optional Europeana cultural heritage imagery with a user-provided
 Europeana API key. Europeana needs its own API authorization and is not queried
@@ -163,7 +163,8 @@ in source counts until real preview requests pass on supported platforms.
 Each masonry tile now has one persistent three-dot action button rather than
 separate Download, Save, and rights overlays. Opening it exposes Download,
 Save / Remove saved, View original source, and Copyright & license. The ©
-caution is a small badge on the same button whenever reuse rights are not
-confirmed public domain or CC0. The full-size image can still be opened by
+caution sits independently at the bottom-right of each image whenever reuse
+rights are not confirmed public domain or CC0. It is non-interactive; the
+three-dot actions button stays at the top-right. The full-size image can still be opened by
 tapping the thumbnail. The menu supports outside-tap and Escape dismissal,
 keyboard arrow/Home/End navigation, and accessible labels, including mobile.
