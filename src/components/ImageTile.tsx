@@ -1,5 +1,5 @@
-import { Bookmark, ArrowUpRight, Download, Copyright, ImageOff, LoaderCircle, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bookmark, ArrowUpRight, Download, Copyright, ImageOff, LoaderCircle, MoreVertical, RefreshCw } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import type { ImageResult } from '../types'
 import { showCopyrightNotice } from '../services/imageRights'
 import { trustedImageFallback } from '../services/imageFallback'
@@ -17,12 +17,41 @@ type Props = {
 export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloading, downloadBusy, isSaved }: Props) {
   const [imageUrl, setImageUrl] = useState(item.thumbnailUrl)
   const [failed, setFailed] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRoot = useRef<HTMLDivElement>(null)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const firstItem = useRef<HTMLButtonElement>(null)
   const aspect = Math.min(1.65, Math.max(0.6, item.width / item.height))
 
   useEffect(() => {
     setImageUrl(item.thumbnailUrl)
     setFailed(false)
+    setMenuOpen(false)
   }, [item.id, item.thumbnailUrl])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function pointerDown(event: PointerEvent) {
+      if (!menuRoot.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    function keyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        setMenuOpen(false)
+        trigger.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', pointerDown)
+    document.addEventListener('keydown', keyDown, true)
+    return () => {
+      document.removeEventListener('pointerdown', pointerDown)
+      document.removeEventListener('keydown', keyDown, true)
+    }
+  }, [menuOpen])
+
+  useEffect(() => { if (menuOpen) firstItem.current?.focus() }, [menuOpen])
+
+  function action(fn: () => void) { setMenuOpen(false); fn() }
 
   const imageError = () => {
     const fallback = trustedImageFallback(item)
@@ -36,7 +65,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
   }
 
   return (
-    <article className="tile">
+    <article className={`tile ${menuOpen ? "tile-menu-open" : ""}`}>
       <button type="button" className="tile-main" onClick={failed ? retry : onOpen}
         aria-label={failed ? `Retry image preview: ${item.title}` : `View image: ${item.title}`}>
         <div className="tile-image" style={{ aspectRatio: String(aspect) }}>
@@ -50,24 +79,34 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
           </span>}
         </div>
       </button>
-      {!failed && showCopyrightNotice(item) && (
-        <span className="tile-copyright" role="img" aria-label="Copyright or reuse restrictions may apply. Check original source."
-          title="Copyright or reuse restrictions may apply · check source">
-          <Copyright size={16} strokeWidth={1.9} />
-        </span>
-      )}
-      {failed && <a className="tile-source" href={item.sourceUrl} target="_blank"
-        rel="noopener noreferrer" aria-label={`View source for ${item.title}`}>View source <ArrowUpRight size={12} /></a>}
-      <button type="button" className="tile-download" onClick={onDownload} disabled={downloadBusy}
-        aria-label={isDownloading ? `Downloading ${item.title}` : `Download ${item.title}`}
-        title={isDownloading ? 'Downloading original image' : 'Download original image'}>
-        {isDownloading ? <LoaderCircle size={17} className="download-spinner" /> : <Download size={17} />}
-      </button>
-      <button type="button" className={`tile-save ${isSaved ? 'is-saved' : ''}`}
-        onClick={onToggleSaved} aria-label={isSaved ? `Remove ${item.title} from saved` : `Save image`}
-        title={isSaved ? 'Remove from saved' : 'Save image'}>
-        <Bookmark size={17} fill={isSaved ? 'currentColor' : 'none'} />
-      </button>
+      <div className="tile-menu-root" ref={menuRoot}>
+        <button ref={trigger} type="button" className="tile-menu-trigger"
+          aria-label={`Image actions for ${item.title}`} aria-haspopup="menu" aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(open => !open)}>
+          <MoreVertical size={19}/>
+          {showCopyrightNotice(item) && <span aria-hidden="true" className="tile-menu-rights">©</span>}
+        </button>
+        {menuOpen && <div className="tile-actions-menu" role="menu" aria-label={`Actions for ${item.title}`}>
+          <button ref={firstItem} type="button" role="menuitem" disabled={downloadBusy} onClick={() => action(onDownload)}>
+            {isDownloading ? <LoaderCircle size={17} className="download-spinner"/> : <Download size={17}/>}
+            {isDownloading ? 'Downloading…' : 'Download image'}
+          </button>
+          <button type="button" role="menuitem" onClick={() => action(onToggleSaved)}>
+            <Bookmark size={17} fill={isSaved ? 'currentColor' : 'none'}/>
+            {isSaved ? 'Remove saved image' : 'Save image'}
+          </button>
+          <a role="menuitem" href={item.sourceUrl} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>
+            <ArrowUpRight size={17}/> View original source
+          </a>
+          <a role="menuitem" href={item.licenseUrl || item.sourceUrl} target="_blank" rel="noopener noreferrer"
+            onClick={() => setMenuOpen(false)}>
+            <Copyright size={17}/> Copyright &amp; license
+          </a>
+          <p className="tile-menu-rights-note">{showCopyrightNotice(item)
+            ? '© Reuse rights may apply. Verify at source.'
+            : 'Public domain / CC0 reported. Verify at source.'}</p>
+        </div>}
+      </div>
     </article>
   )
 }
