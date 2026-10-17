@@ -18,6 +18,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
   const [imageUrl, setImageUrl] = useState(item.thumbnailUrl)
   const [failed, setFailed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAbove, setMenuAbove] = useState(false)
   const menuRoot = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const firstItem = useRef<HTMLButtonElement>(null)
@@ -65,6 +66,17 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
     items[next].focus()
   }
 
+  function toggleMenu() {
+    if (menuOpen) { setMenuOpen(false); return }
+    // Avoid hiding the last actions behind the fixed mobile navigation bar.
+    const bounds = trigger.current?.getBoundingClientRect()
+    const mobileNavSpace = window.matchMedia?.('(max-width: 680px)').matches ? 92 : 18
+    const below = bounds ? window.innerHeight - bounds.bottom - mobileNavSpace : 0
+    const above = bounds?.top ?? 0
+    setMenuAbove(below < 245 && above > below)
+    setMenuOpen(true)
+  }
+
   function action(fn: () => void) { setMenuOpen(false); fn() }
 
   const imageError = () => {
@@ -79,7 +91,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
   }
 
   return (
-    <article className={`tile ${menuOpen ? "tile-menu-open" : ""}`}>
+    <article className={`tile ${menuOpen ? "tile-menu-open" : ""} ${menuAbove ? "tile-menu-above" : ""}`}>
       <button type="button" className="tile-main" onClick={failed ? retry : onOpen}
         aria-label={failed ? `Retry image preview: ${item.title}` : `View image: ${item.title}`}>
         <div className="tile-image" style={{ aspectRatio: String(aspect) }}>
@@ -96,7 +108,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
       <div className="tile-menu-root" ref={menuRoot}>
         <button ref={trigger} type="button" className="tile-menu-trigger"
           aria-label={`Image actions for ${item.title}`} aria-haspopup="menu" aria-expanded={menuOpen}
-          onClick={() => setMenuOpen(open => !open)}>
+          onClick={toggleMenu}>
           <MoreVertical size={19}/>
           {showCopyrightNotice(item) && <span aria-hidden="true" className="tile-menu-rights">©</span>}
         </button>
