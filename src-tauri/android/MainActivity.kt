@@ -17,7 +17,9 @@ class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Light on first launch; persisted dark preference is applied by the web bridge.
-        AndroidSystemBars.apply(this, "light")
+        val saved = getSharedPreferences("image-search.appearance.v1", MODE_PRIVATE)
+            .getString("theme", "light") ?: "light"
+        AndroidSystemBars.apply(this, saved)
         val container = findViewById<View>(android.R.id.content)
         ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
             val types = WindowInsetsCompat.Type.systemBars() or
