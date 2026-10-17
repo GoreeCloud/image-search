@@ -1,0 +1,4 @@
+# Cargo invoked from the repository root must see Android target flags here.
+# Cargo started within src-tauri has the same target flag in src-tauri/.cargo.
+[target.aarch64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
