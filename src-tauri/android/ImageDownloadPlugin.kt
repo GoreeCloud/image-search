@@ -37,6 +37,8 @@ class ImageSaveArgs {
 object AndroidSystemBars {
     fun apply(activity: Activity, mode: String) {
         val light = mode == "light"
+        activity.getSharedPreferences("image-search.appearance.v1", Activity.MODE_PRIVATE)
+            .edit().putString("theme", if (light) "light" else "dark").apply()
         val background = Color.parseColor(if (light) "#faf9fc" else "#0e0f12")
         val window = activity.window
         window.decorView.setBackgroundColor(background)
