@@ -49,6 +49,7 @@ jobs:
         run: npm run tauri -- android build --debug --target aarch64 --config src-tauri/tauri.qa.run.json --ci
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
+          RUSTFLAGS: '-C link-arg=-Wl,-z,max-page-size=16384'
       - name: Verify QA package and certificate
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
@@ -57,6 +58,11 @@ jobs:
             AAPT_BIN="${ANDROID_HOME}/build-tools/35.0.0/aapt" \
             APKSIGNER_BIN="${ANDROID_HOME}/build-tools/35.0.0/apksigner" \
             bash scripts/verify-android-apk.sh "$APK"
+      - name: Check Android 16 KiB ELF and APK ZIP alignment
+        run: |
+          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
+          test -n "$APK" && test -s "$APK"
+          PATH="${ANDROID_HOME}/build-tools/35.0.0:$PATH" bash scripts/verify-android-16k.sh "$APK"
       - uses: actions/upload-artifact@v4
         with:
           name: image-search-usb-qa-debug
