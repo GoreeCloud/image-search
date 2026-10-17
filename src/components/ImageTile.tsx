@@ -1,5 +1,5 @@
 import { Bookmark, ArrowUpRight, Download, Copyright, ImageOff, LoaderCircle, MoreVertical, RefreshCw } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { ImageResult } from '../types'
 import { showCopyrightNotice } from '../services/imageRights'
 import { trustedImageFallback } from '../services/imageFallback'
@@ -51,6 +51,20 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
 
   useEffect(() => { if (menuOpen) firstItem.current?.focus() }, [menuOpen])
 
+  function onMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Tab') { setMenuOpen(false); return }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])'))
+    if (!items.length) return
+    const current = items.indexOf(document.activeElement as HTMLElement)
+    const next = event.key === 'Home' ? 0
+      : event.key === 'End' ? items.length - 1
+      : event.key === 'ArrowDown' ? (current + 1) % items.length
+      : (current - 1 + items.length) % items.length
+    items[next].focus()
+  }
+
   function action(fn: () => void) { setMenuOpen(false); fn() }
 
   const imageError = () => {
@@ -86,7 +100,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, isDownloadi
           <MoreVertical size={19}/>
           {showCopyrightNotice(item) && <span aria-hidden="true" className="tile-menu-rights">©</span>}
         </button>
-        {menuOpen && <div className="tile-actions-menu" role="menu" aria-label={`Actions for ${item.title}`}>
+        {menuOpen && <div className="tile-actions-menu" role="menu" onKeyDown={onMenuKeyDown} aria-label={`Actions for ${item.title}`}>
           <button ref={firstItem} type="button" role="menuitem" disabled={downloadBusy} onClick={() => action(onDownload)}>
             {isDownloading ? <LoaderCircle size={17} className="download-spinner"/> : <Download size={17}/>}
             {isDownloading ? 'Downloading…' : 'Download image'}
