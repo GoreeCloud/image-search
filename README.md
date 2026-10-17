@@ -163,7 +163,8 @@ in source counts until real preview requests pass on supported platforms.
 Each masonry tile now has one persistent three-dot action button rather than
 separate Download, Save, and rights overlays. Opening it exposes Download,
 Save / Remove saved, View original source, and Copyright & license. The ©
-caution is a small badge on the same button whenever reuse rights are not
-confirmed public domain or CC0. The full-size image can still be opened by
+caution sits independently at the bottom-right of each image whenever reuse
+rights are not confirmed public domain or CC0. It is non-interactive; the
+three-dot actions button stays at the top-right. The full-size image can still be opened by
 tapping the thumbnail. The menu supports outside-tap and Escape dismissal,
 keyboard arrow/Home/End navigation, and accessible labels, including mobile.
