@@ -23,3 +23,35 @@ describe('bounded provider requests', () => {
     await assertion
   })
 })
+
+
+it('continues timing out after headers if the provider body stalls', async () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((_url, options: RequestInit) => {
+    const body = new ReadableStream<Uint8Array>({
+      start(sink) {
+        options.signal?.addEventListener('abort', () => sink.error(new DOMException('Cancelled', 'AbortError')))
+      },
+    })
+    return Promise.resolve(new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } }))
+  }))
+  const response = await fetchWithTimeout('https://api.openverse.org/v1/images/', undefined, 100)
+  const assertion = expect(response.json()).rejects.toThrow('timed out')
+  await vi.advanceTimersByTimeAsync(101)
+  await assertion
+})
+it('preserves caller cancellation while reading a provider response body', async () => {
+  const external = new AbortController()
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((_url, options: RequestInit) => {
+    const body = new ReadableStream<Uint8Array>({
+      start(sink) {
+        options.signal?.addEventListener('abort', () => sink.error(new DOMException('Cancelled', 'AbortError')))
+      },
+    })
+    return Promise.resolve(new Response(body))
+  }))
+  const response = await fetchWithTimeout('https://commons.wikimedia.org/w/api.php', external.signal, 100)
+  const assertion = expect(response.text()).rejects.toThrow('Cancelled')
+  external.abort()
+  await assertion
+})
