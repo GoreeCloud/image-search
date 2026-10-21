@@ -42,7 +42,7 @@ it('fails closed on malformed or oversized aggregate pagination before provider 
     JSON.stringify({commons: {continue: 'x'}}),
     JSON.stringify({openverse: 'x'.repeat(2050)}),
     'x'.repeat(8193),
-    JSON.stringify({openverse: 'bad\\nvalue'}),
+    JSON.stringify({openverse: 'bad' + String.fromCharCode(10) + 'value'}),
   ]
   for (const cursor of invalid) {
     await expect(searchAllSources('flowers', cursor)).rejects.toThrow('Invalid image page cursor')
