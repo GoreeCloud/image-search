@@ -27,8 +27,18 @@ export async function searchAllSources(query: string, cursor: string | null, sig
   let cursors: MultiCursor
   if (cursor === null) cursors = Object.fromEntries(sources.map(s => [s, ''])) as MultiCursor
   else {
+    // Aggregate cursors can be pasted, persisted, or supplied through a link.
+    // Validate the whole envelope before dispatching any provider requests.
+    if (typeof cursor !== 'string' || cursor.length > 8192) throw new Error('Invalid image page cursor')
     try { cursors = JSON.parse(cursor) as MultiCursor } catch { throw new Error('Invalid image page cursor') }
-    if (!cursors || typeof cursors !== 'object' || Array.isArray(cursors)) throw new Error('Invalid image page cursor')
+    if (!cursors || typeof cursors !== 'object' || Array.isArray(cursors)
+        || Object.keys(cursors).length > sources.length
+        || Object.entries(cursors).some(([source, value]) =>
+          !sources.includes(source as SingleSource)
+          || !(value === null || (typeof value === 'string'
+            && value.length <= 2048 && !/[\u0000-\u001f\u007f]/.test(value))))) {
+      throw new Error('Invalid image page cursor')
+    }
   }
   const active = sources.filter(s => typeof cursors[s] === 'string')
   if (!active.length) return { items: [], cursor: null }
