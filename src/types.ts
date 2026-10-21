@@ -16,4 +16,6 @@ export type ImageResult = {
 export type SearchPage = {
   items: ImageResult[]
   cursor: string | null
+  /** Source keys that failed on this page. Partial results remain usable. */
+  unavailableSources?: string[]
 }
