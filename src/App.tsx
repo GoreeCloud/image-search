@@ -10,10 +10,14 @@ import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
 import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard'
-import type { ImageSource } from './services/providers'
+import type { ImageSource, SingleSource } from './services/providers'
 import type { ImageResult } from './types'
 
 const TOPICS = ['Nature', 'Architecture', 'Interiors', 'Travel', 'Wildlife', 'Flowers', 'Textures']
+const SOURCE_LABELS: Record<SingleSource, string> = {
+  openverse: 'Openverse', commons: 'Wikimedia Commons', loc: 'Library of Congress',
+  nasa: 'NASA', cleveland: 'Cleveland Museum of Art', met: 'The Met', europeana: 'Europeana',
+}
 type View = 'explore' | 'saved' | 'settings'
 type Orientation = 'all' | 'landscape' | 'portrait' | 'square'
 const ORIENTATIONS: { value: Orientation; label: string }[] = [
@@ -46,7 +50,7 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
-  const { images, loading, loadingMore, error, loadMoreError, hasMore, loadMore } = useImageSearch(query, refresh, source)
+  const { images, loading, loadingMore, error, loadMoreError, unavailableSources, hasMore, loadMore } = useImageSearch(query, refresh, source)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
   const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
   const currentIndex = visible.findIndex((item) => item.id === detailId)
@@ -54,11 +58,13 @@ export default function App() {
 
   useEffect(() => {
     const node = sentinel.current
-    if (!node || view !== 'explore' || !hasMore || error || loadMoreError || loading) return
+    // If providers are down, pause background pagination. Only an explicit
+    // click on Explore more should retry the failed sources.
+    if (!node || view !== 'explore' || !hasMore || error || loadMoreError || loading || unavailableSources.length) return
     const observer = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) void loadMore() }, { rootMargin: '800px' })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loadMore, view, hasMore, error, loadMoreError, loading])
+  }, [loadMore, view, hasMore, error, loadMoreError, loading, unavailableSources])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -208,6 +214,10 @@ export default function App() {
         </div>
 
         {storageError && <div className="message-bar" role="status">Saved images could not be persisted on this device. Check available storage or browser privacy settings.</div>}
+        {view === 'explore' && !loading && unavailableSources.length > 0 && <div className="message-bar" role="status">
+          Some image collections are temporarily unavailable: {unavailableSources.map(name => SOURCE_LABELS[name as SingleSource] || 'Image source').join(', ')}.
+          {hasMore ? ' Choose Explore more to retry the unavailable sources.' : ' Try again later.'}
+        </div>}
 
         {error && view === 'explore' && <div className="error-panel" role="alert"><span>We couldn't load the images.</span><p>{error}</p><button type="button" onClick={() => setRefresh((n) => n + 1)}><RotateCcw size={16}/> Try again</button></div>}
 
