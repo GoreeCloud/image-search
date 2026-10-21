@@ -51,9 +51,12 @@ export async function searchAllSources(query: string, cursor: string | null, sig
   if (!succeeded.length) throw new Error('Image sources are temporarily unavailable. Try an individual source.')
   const next: MultiCursor = {}
   for (const s of succeeded) next[s.value.source] = s.value.page.cursor
+  const unavailableSources = responses.flatMap((r, index) =>
+    r.status === 'rejected' ? [active[index]] : [])
   responses.forEach((r, index) => { if (r.status === 'rejected') next[active[index]] = cursors[active[index]] })
   return {
     items: uniqueImages(succeeded.flatMap(r => r.value.page.items)),
     cursor: Object.values(next).some(value => typeof value === 'string') ? JSON.stringify(next) : null,
+    unavailableSources,
   }
 }
