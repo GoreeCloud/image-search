@@ -56,6 +56,19 @@ it('preserves caller cancellation while reading a provider response body', async
   await assertion
 })
 
+it('rejects oversized JSON responses before full buffering', async () => {
+  const source = vi.fn().mockResolvedValue(new Response(new ReadableStream<Uint8Array>({
+    start(sink) {
+      sink.enqueue(new Uint8Array(4 * 1024 * 1024 + 1))
+      sink.close()
+    },
+  }), { status: 200 }))
+  vi.stubGlobal('fetch', source)
+  const response = await fetchWithTimeout('https://api.openverse.org/v1/images/')
+  await expect(response.arrayBuffer()).rejects.toThrow('4 MB safety limit')
+  expect(source).toHaveBeenCalledTimes(1)
+})
+
 it('omits credentials and referrers while refusing redirects for provider API calls', async () => {
   const provider = vi.fn().mockResolvedValue(new Response('{"ok":true}', {
     status: 200,
