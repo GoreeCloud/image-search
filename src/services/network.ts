@@ -20,6 +20,10 @@ export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeou
   try {
     const response = await fetch(url, {
       method: 'GET',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+      redirect: 'error',
+      cache: 'no-store',
       signal: controller.signal,
       headers: { Accept: 'application/json', ...extraHeaders },
     })
