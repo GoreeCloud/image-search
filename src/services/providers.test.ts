@@ -32,7 +32,26 @@ it('collects available providers when another provider fails', async () => {
   expect(page.items.map(x => x.id)).toEqual(['example','art','museum','met'])
   expect(page.cursor).toContain('openverse')
   expect(page.cursor).toContain('commons')
+  expect(page.unavailableSources).toEqual(['commons'])
 })
+it('recovers a failed collection when a user retries the preserved cursor', async () => {
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) {
+    vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  }
+  vi.mocked(searchOpenverse).mockResolvedValue({items:[image],cursor:null})
+  vi.mocked(searchCommons).mockRejectedValueOnce(new Error('provider timeout'))
+  const initial = await searchAllSources('nature',null)
+  expect(initial.unavailableSources).toEqual(['commons'])
+  expect(initial.cursor).not.toBeNull()
+  vi.mocked(searchCommons).mockResolvedValue({
+    items:[{...image,id:'commons:new',provider:'Wikimedia Commons'}],cursor:null,
+  })
+  const retried = await searchAllSources('nature',initial.cursor)
+  expect(retried.unavailableSources).toEqual([])
+  expect(retried.items.map(item=>item.id)).toEqual(['commons:new'])
+  expect(retried.cursor).toBeNull()
+})
+
 it('fails closed on malformed or oversized aggregate pagination before provider dispatch', async () => {
   const invalid = [
     '{', '[]', 'false', 'null', '42',
