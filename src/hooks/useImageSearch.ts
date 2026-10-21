@@ -10,6 +10,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
+  const [unavailableSources, setUnavailableSources] = useState<string[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
   const requestRef = useRef(0)
