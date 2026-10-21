@@ -46,7 +46,7 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
 
-  const { images, loading, loadingMore, error, loadMoreError, hasMore, loadMore } = useImageSearch(query, refresh, source)
+  const { images, loading, loadingMore, error, unavailableSources, loadMoreError, hasMore, loadMore } = useImageSearch(query, refresh, source)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
   const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
   const currentIndex = visible.findIndex((item) => item.id === detailId)
@@ -170,7 +170,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? hasEuropeanaKey() ? 'Seven image collections' : 'Six image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'europeana' ? 'Europeana' : 'Library of Congress') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? `GoreeCloud Search + ${7 + Number(hasEuropeanaKey())} collections` : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'europeana' ? 'Europeana' : source === 'wikipedia' ? 'Wikipedia' : source === 'web' ? 'GoreeCloud Search' : 'Library of Congress') : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -195,7 +195,9 @@ export default function App() {
               <option value="nasa">NASA Images</option>
               <option value="cleveland">Cleveland Museum of Art</option>
               <option value="met">The Metropolitan Museum of Art</option>
+              <option value="wikipedia">Wikipedia articles</option>
               <option value="europeana">Europeana (API key)</option>
+              <option value="web">GoreeCloud Search · Web images</option>
             </select>
           </div>
           <div className="filter-wrap"><SlidersHorizontal size={16}/>
@@ -207,6 +209,8 @@ export default function App() {
           </div>
         </div>
 
+        {view === 'explore' && !loading && unavailableSources.includes('web') &&
+          <div className="message-bar" role="status">GoreeCloud Search web images are temporarily unavailable. Results from other image collections are still shown. <button type="button" className="source-retry" onClick={() => setRefresh(n => n + 1)}>Retry</button></div>}
         {storageError && <div className="message-bar" role="status">Saved images could not be persisted on this device. Check available storage or browser privacy settings.</div>}
 
         {error && view === 'explore' && <div className="error-panel" role="alert"><span>We couldn't load the images.</span><p>{error}</p><button type="button" onClick={() => setRefresh((n) => n + 1)}><RotateCcw size={16}/> Try again</button></div>}

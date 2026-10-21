@@ -4,19 +4,19 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 
 ## Available capabilities
 
-- Search **six keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Search **seven keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections, plus Wikipedia article images. Filter to any individual source from the Source menu. No provider API key is embedded or required.
 - Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
-- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
+- Light-first Glaze styling with an optional dark theme, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
-**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
+**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These keyless collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ Copyright (C) 2026 GoreeCloud. Original GoreeCloud Image Search source code is l
 
 On mobile, **Settings** sits beside Explore and Saved in the bottom dock; on
 desktop it is in the main navigation. Settings > **Appearance** lets you choose
-Dark or Light Mode. Only the theme preference is stored locally.
+Light or Dark Mode. New installations default to Light; explicit theme choices are remembered locally. On Android, both status and navigation bars also switch background and icon contrast to match the chosen mode.
 
 **Settings > API** supports optional Europeana cultural heritage imagery with a user-provided
 Europeana API key. Europeana needs its own API authorization and is not queried
@@ -108,3 +108,63 @@ The Met is filtered to public-domain items, and individual image URLs are
 limited to its official CDN. These sources are not unrestricted web crawlers.
 
 Android QA: On Android 10+, downloads now use native MediaStore to save to the public Downloads folder; only a finalized file triggers success. Physical-device verification is required before release.
+
+## Native GoreeCloud Search image integration (development)
+
+**GoreeCloud Search** is the default general-web image source. Its client
+adapter is built directly into the web, Linux, and Android Image Search app;
+users do not enter SearXNG URLs or connect third-party instances. The backend
+is GoreeCloud's SearXNG fork, deployed as a separately managed first-party
+service (not a Python server embedded in the APK).
+
+All sources queries automatically include GoreeCloud Search plus seven public
+collections: Openverse, Wikimedia Commons, Wikipedia article images, NASA,
+Library of Congress, Cleveland Museum of Art, and The Met. Europeana remains
+optional with a session API key. Technology queries such as
+`Samsung OneUI` normalize to `Samsung One UI`, prioritizing Commons and
+Wikipedia screenshots, and deduplicating identical original-image URLs.
+
+The intended first-party service URL is
+`https://search.goreecloud.com/search`. **DNS and deployment are not yet
+verified**; this URL is a target and not a claim that the backend is online.
+Release builds may set `VITE_GOREECLOUD_SEARCH_IMAGES_URL` to an approved
+first-party HTTPS `/search` endpoint. The adapter uses POST form data with
+`q`, `categories=images`, `format=json`, `pageno`, and `safesearch=1`;
+it does not include query terms in the URL, credentials, or a referrer.
+Cross-origin web/PWA access requires the GoreeCloud reverse proxy to enable
+restricted CORS for the appropriate app origin. The fork's isolated private
+image-engine profile is kept separate from its existing two-provider web
+search configuration.
+
+When GoreeCloud Search is offline, image search still returns the public
+collections and displays an explicit availability message and Retry.
+GoreeCloud Search's availability and breadth depend on the deployed backend,
+its configured engines and upstream access; Google Images parity is not
+guaranteed and no unapproved scraping bypass is implied.
+
+**Copyright indicator:** A persistent © caution appears on masonry tiles
+and previews whenever public-domain or CC0 status is not explicit, including
+web images and Creative Commons attribution licenses. The symbol means
+reuse rights **may** apply; it is not a determination of ownership. View
+original sources for definitive terms. Thumbnails may be requested from
+third-party origins; this can disclose client IP addresses to those hosts.
+
+### Candidate provider held back
+
+The Art Institute of Chicago exposes a documented no-key image collection API.
+Its metadata search returned HTTP 200 during testing, but its IIIF image CDN
+returned HTTP 403 with a Cloudflare challenge to our development environment.
+The adapter prototype in `src/services/artic.ts` is deliberately **not registered**
+as a live search provider; it must not be advertised as functioning or included
+in source counts until real preview requests pass on supported platforms.
+
+### Compact image tile actions
+
+Each masonry tile now has one persistent three-dot action button rather than
+separate Download, Save, and rights overlays. Opening it exposes Download,
+Save / Remove saved, View original source, and Copyright & license. The ©
+caution sits independently at the bottom-right of each image whenever reuse
+rights are not confirmed public domain or CC0. It is non-interactive; the
+three-dot actions button stays at the top-right. The full-size image can still be opened by
+tapping the thumbnail. The menu supports outside-tap and Escape dismissal,
+keyboard arrow/Home/End navigation, and accessible labels, including mobile.
