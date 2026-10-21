@@ -55,3 +55,20 @@ it('preserves caller cancellation while reading a provider response body', async
   external.abort()
   await assertion
 })
+
+it('omits credentials and referrers while refusing redirects for provider API calls', async () => {
+  const provider = vi.fn().mockResolvedValue(new Response('{"ok":true}', {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  }))
+  vi.stubGlobal('fetch', provider)
+  const response = await fetchWithTimeout('https://api.openverse.org/v1/images/')
+  expect(await response.json()).toEqual({ ok: true })
+  expect(provider).toHaveBeenCalledWith('https://api.openverse.org/v1/images/', expect.objectContaining({
+    method: 'GET',
+    credentials: 'omit',
+    referrerPolicy: 'no-referrer',
+    redirect: 'error',
+    cache: 'no-store',
+  }))
+})
