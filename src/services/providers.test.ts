@@ -135,3 +135,36 @@ it('includes both new no-key museum collections in all-source results', async ()
   expect(searchWellcome).toHaveBeenCalledWith('flowers',null,undefined)
   expect(searchVam).toHaveBeenCalledWith('flowers',null,undefined)
 })
+
+it('federates relevant screenshot collections only for modern mobile UI searches', async () => {
+  vi.mocked(searchOpenverse).mockResolvedValue({
+    items: [
+      {...image, id: 'logo', title: 'Wikipedia logo'},
+      {...image, id: 'oneui', title: 'Samsung One UI settings screenshot'},
+    ], cursor: null,
+  })
+  vi.mocked(searchCommons).mockResolvedValue({
+    items: [{...image, id: 'quick', title: 'OneUI Galaxy quick settings'}], cursor: null,
+  })
+  const page = await searchAllSources('Samsung OneUI', null)
+  expect(page.items.map(item => item.id)).toEqual(['oneui', 'quick'])
+  expect(searchNasa).not.toHaveBeenCalled()
+  expect(searchMet).not.toHaveBeenCalled()
+  expect(searchWellcome).not.toHaveBeenCalled()
+  expect(searchVam).not.toHaveBeenCalled()
+})
+
+it('preserves retryable failure cursors for a technology query', async () => {
+  vi.mocked(searchOpenverse).mockRejectedValueOnce(new Error('temporary outage'))
+  vi.mocked(searchCommons).mockResolvedValue({items: [], cursor: null})
+  const page = await searchAllSources('Samsung OneUI', null)
+  expect(page.unavailableSources).toEqual(['openverse'])
+  expect(page.cursor).not.toBeNull()
+  vi.mocked(searchOpenverse).mockResolvedValue({
+    items: [{...image, id: 'screen', title: 'Samsung One UI 7 screenshot'}], cursor: null,
+  })
+  const recovered = await searchAllSources('Samsung OneUI', page.cursor)
+  expect(recovered.items.map(item => item.id)).toEqual(['screen'])
+  expect(recovered.cursor).toBeNull()
+  expect(recovered.unavailableSources).toEqual([])
+})
