@@ -26,3 +26,11 @@ it('blocks unsafe and same-url fallbacks', () => {
   expect(trustedImageFallback({ ...image, url:'http://upload.wikimedia.org/a.jpg' })).toBeNull()
   expect(trustedImageFallback({ ...image, url:image.thumbnailUrl })).toBeNull()
 })
+
+it('accepts only same-host official Wellcome and V&A IIIF image fallbacks', () => {
+  for (const hostname of ['iiif.wellcomecollection.org', 'framemark.vam.ac.uk']) {
+    const item = { ...image, thumbnailUrl:`https://${hostname}/a/thumb.jpg`, url:`https://${hostname}/a/full.jpg` }
+    expect(trustedImageFallback(item)).toBe(item.url)
+    expect(trustedImageFallback({...item,url:'https://evil.test/a.jpg'})).toBeNull()
+  }
+})

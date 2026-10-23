@@ -5,10 +5,12 @@ import { searchLoC } from './loc'
 import { searchNasa } from './nasa'
 import { searchCma } from './cleveland'
 import { searchMet } from './met'
+import { searchWellcome } from './wellcome'
+import { searchVam } from './vam'
 import { searchEuropeana } from './europeana'
 import { hasEuropeanaKey } from './apiKeys'
 
-export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, europeana: searchEuropeana }
+export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, wellcome: searchWellcome, vam: searchVam, europeana: searchEuropeana }
 export type SingleSource = keyof typeof SOURCE_SEARCH
 export type ImageSource = SingleSource | 'all'
 type MultiCursor = Partial<Record<SingleSource, string | null>>

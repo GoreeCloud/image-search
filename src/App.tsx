@@ -17,6 +17,7 @@ const TOPICS = ['Nature', 'Architecture', 'Interiors', 'Travel', 'Wildlife', 'Fl
 const SOURCE_LABELS: Record<SingleSource, string> = {
   openverse: 'Openverse', commons: 'Wikimedia Commons', loc: 'Library of Congress',
   nasa: 'NASA', cleveland: 'Cleveland Museum of Art', met: 'The Met', europeana: 'Europeana',
+  wellcome: 'Wellcome Collection', vam: 'Victoria and Albert Museum',
 }
 type View = 'explore' | 'saved' | 'settings'
 type Orientation = 'all' | 'landscape' | 'portrait' | 'square'
@@ -28,6 +29,7 @@ const ORIENTATIONS: { value: Orientation; label: string }[] = [
 ]
 
 function isOrientation(image: ImageResult, orientation: Orientation) {
+  if (orientation !== 'all' && image.dimensionsKnown === false) return false
   const ratio = image.width / image.height
   return orientation === 'all'
     || (orientation === 'landscape' && ratio > 1.2)
@@ -176,7 +178,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? hasEuropeanaKey() ? 'Seven image collections' : 'Six image collections' : source === 'openverse' ? 'Openverse' : source === 'commons' ? 'Wikimedia Commons' : source === 'nasa' ? 'NASA Images' : source === 'cleveland' ? 'Cleveland Museum of Art' : source === 'met' ? 'The Met' : source === 'europeana' ? 'Europeana' : 'Library of Congress') : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? `${hasEuropeanaKey() ? 'Nine' : 'Eight'} image collections` : SOURCE_LABELS[source]) : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -190,6 +192,9 @@ export default function App() {
           <div className="results-title">
             <h2>{view === 'saved' ? 'Saved collection' : query.trim() ? `Results for “${query.trim()}”` : 'Explore images'}</h2>
             <span>{loading && view === 'explore' ? 'Searching…' : `${visible.length} images${view === 'explore' && hasMore ? ' · more to explore' : ''}`}</span>
+            {view === 'explore' && !loading && !error && hasMore && <button type="button" className="quick-more" disabled={loadingMore} onClick={() => void loadMore()}>
+              {loadingMore ? 'Loading…' : 'Show more images'} <ArrowDown size={14} />
+            </button>}
           </div>
           <div className="toolbar-filters">
           <div className="filter-wrap source-filter"><label htmlFor="source">Source</label>
@@ -201,6 +206,8 @@ export default function App() {
               <option value="nasa">NASA Images</option>
               <option value="cleveland">Cleveland Museum of Art</option>
               <option value="met">The Metropolitan Museum of Art</option>
+              <option value="wellcome">Wellcome Collection</option>
+              <option value="vam">Victoria and Albert Museum</option>
               <option value="europeana">Europeana (API key)</option>
             </select>
           </div>
@@ -216,7 +223,7 @@ export default function App() {
         {storageError && <div className="message-bar" role="status">Saved images could not be persisted on this device. Check available storage or browser privacy settings.</div>}
         {view === 'explore' && !loading && unavailableSources.length > 0 && <div className="message-bar" role="status">
           Some image collections are temporarily unavailable: {unavailableSources.map(name => SOURCE_LABELS[name as SingleSource] || 'Image source').join(', ')}.
-          {hasMore ? ' Choose Explore more to retry the unavailable sources.' : ' Try again later.'}
+          {hasMore ? ' Choose Show more images to continue and retry these sources.' : ' Try again later.'}
         </div>}
 
         {error && view === 'explore' && <div className="error-panel" role="alert"><span>We couldn't load the images.</span><p>{error}</p><button type="button" onClick={() => setRefresh((n) => n + 1)}><RotateCcw size={16}/> Try again</button></div>}
