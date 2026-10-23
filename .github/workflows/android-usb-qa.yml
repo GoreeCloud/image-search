@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   android_qa:
-    if: startsWith(github.head_ref, 'qa/') || startsWith(github.head_ref, 'feat/')
+    if: startsWith(github.head_ref, 'qa/') || startsWith(github.head_ref, 'feat/') || startsWith(github.head_ref, 'fix/')
     name: Isolated USB QA APK
     runs-on: ubuntu-22.04
     steps:
