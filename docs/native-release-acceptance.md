@@ -1,6 +1,6 @@
 # Native release acceptance checklist
 
-This checklist applies to GoreeCloud Image Search development builds. Passing CI packaging is not proof of a Stable release.
+This checklist applies to GoreeCloud Image Search development builds. The current Tauri WebView-based Linux/Android packages are transitional QA artifacts, **not native-complete applications** under the GoreeCloud operating-system mandate. The checks below do not replace implementation and acceptance of genuine native interfaces, lifecycle behavior, platform integrations, and upgrades. Passing CI packaging is not proof of an **Anchor** release.
 
 ## Candidate and Linux checks
 
@@ -9,6 +9,7 @@ This checklist applies to GoreeCloud Image Search development builds. Passing CI
 3. Exercise federated Openverse, Wikimedia, NASA, and Library of Congress search; verify actual images display, source rights links, saving, keyboard navigation, and responsive layouts.
 4. Exercise offline/retry behavior and failed-preview recovery. Verify AppImage launch, reinstall/upgrade, and rollback.
 5. Record any blocked UI acceptance, WebKit regressions, or incomplete source availability separately.
+6. Evaluate the native Linux implementation boundary separately; DEB/AppImage packaging of the WebView UI alone cannot satisfy native acceptance.
 
 ## Disposable Android QA package safety
 
@@ -28,7 +29,9 @@ persistent protected Development signing identity required for owner APKs.
 4. Exercise source filters, saved collection, lightbox navigation, focus accessibility, thumbnail retry, and source-link privacy behavior.
 5. Verify *update in place* with the same protected GoreeCloud Development signing identity and monotonically increasing versionCode, preserving app data and preferences.
 6. Before delivering a Development APK to the owner, copy the **exact verified APK** into the authorized GoreeCloud Google Drive account, then read back its identity and metadata. Temporary CI debug signing must never be represented as update-compatible.
+7. Verify every packaged arm64 native ELF `PT_LOAD` segment and APK library ZIP alignment support 16 KiB pages, then check on a real/representative device for the absence of the compatibility warning. Track this under [issue #17](https://github.com/GoreeCloud/image-search/issues/17); a proposed CI gate or green build alone does not close device acceptance.
+8. Evaluate the actual native Android UI and application lifecycle separately from a WebView-based package, and close the keyboard/viewport issue [#11](https://github.com/GoreeCloud/image-search/issues/11) only with representative-device evidence.
 
 ## Release decision
 
-Document known defects, privacy/security implications, target devices, limitations, manual QA evidence, dependency review, signing/upgrade evidence, owner delivery identity, and recovery plan. Do not mark Stable until required runtime and release gates pass.
+Document known defects, privacy/security implications, target devices, limitations, manual QA evidence, dependency review, signing/upgrade evidence, owner delivery identity, recovery plan, and applicable nine-system integration. Do not mark the release **Anchor** until the genuine native implementation and all other required runtime and release gates pass.
