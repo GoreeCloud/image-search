@@ -3,6 +3,7 @@ import type { ImageResult } from '../types'
 /** Collections excel at culture and photography, not current device screenshots. */
 const MODERN_TECH_TERMS = /\b(?:one[\s_-]*ui|android|samsung|iphone|ipad|ios|macos|oneplus|oxygenos|hyperos|screenshots?|software interface|user interface|home screen|quick settings|windows\s+(?:10|11|xp|vista|desktop)|google\s+pixel)\b/i
 const IGNORED_TERMS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the', 'to', 'with', 'image', 'images', 'photo', 'photos'])
+const INTERFACE_QUERY = /\b(?:one[\s_-]*ui|android|ios|macos|oxygenos|hyperos|screenshots?|software interface|user interface|home screen|quick settings|windows\s+(?:10|11|xp|vista|desktop))\b/i
 const NON_SCREEN_ASSET = /\b(?:fonts?|sans|typeface|typography|logos?|emblems?|icons?|wallpapers?|vector|badge|sticker)\b/i
 const SCREEN_EVIDENCE = /\b(?:screenshots?|screens?|settings|setup|interface|launcher|notifications?|panel|home|lock|updates?|gesture|navigation|quick)\b/i
 
@@ -31,6 +32,7 @@ export function rankCollectionImages(query: string, images: readonly ImageResult
   const queryTokens = tokens(query)
   if (!queryTokens.length) return [...images]
   const wantsAsset = NON_SCREEN_ASSET.test(query)
+  const screenshotIntent = INTERFACE_QUERY.test(query)
 
   const scored = images.map((image, index) => {
     const title = new Set(tokens(image.title))
@@ -38,8 +40,8 @@ export function rankCollectionImages(query: string, images: readonly ImageResult
     const titleHits = queryTokens.filter(token => title.has(token)).length
     const descriptionHits = queryTokens.filter(token => description.has(token)).length
     const totalHits = queryTokens.filter(token => title.has(token) || description.has(token)).length
-    const unrelatedAsset = !wantsAsset && NON_SCREEN_ASSET.test(image.title)
-    const screenBonus = SCREEN_EVIDENCE.test(image.title) ? 5 : SCREEN_EVIDENCE.test(image.description) ? 1 : 0
+    const unrelatedAsset = screenshotIntent && !wantsAsset && NON_SCREEN_ASSET.test(image.title)
+    const screenBonus = screenshotIntent ? (SCREEN_EVIDENCE.test(image.title) ? 5 : SCREEN_EVIDENCE.test(image.description) ? 1 : 0) : 0
     return { image, index, titleHits, totalHits, unrelatedAsset, score: titleHits * 4 + descriptionHits + screenBonus }
   })
   return scored

@@ -49,4 +49,5 @@ it('prefers actual UI screenshots while preserving explicit font and icon querie
   ]
   expect(rankCollectionImages('Samsung OneUI', images).map(item => item.id)).toEqual(['setup', 'settings'])
   expect(rankCollectionImages('Samsung One UI font', images).map(item => item.id)).toContain('font')
+  expect(rankCollectionImages('Samsung', images).map(item => item.id)).toEqual(['font', 'setup', 'logo'])
 })
