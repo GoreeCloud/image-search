@@ -25,6 +25,18 @@ export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
   })
 }
 
+/** Fairly weave each available provider page without changing the provider's own ranking. */
+export function interleaveImagePages(pages: readonly (readonly ImageResult[])[]): ImageResult[] {
+  const images: ImageResult[] = []
+  const longest = Math.max(0, ...pages.map(page => page.length))
+  for (let index = 0; index < longest; index++) {
+    for (const page of pages) {
+      if (index < page.length) images.push(page[index])
+    }
+  }
+  return images
+}
+
 export async function searchAllSources(query: string, cursor: string | null, signal?: AbortSignal): Promise<SearchPage> {
   const sources = sourcesForQuery(query, (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s => s !== 'europeana' || hasEuropeanaKey()))
   let cursors: MultiCursor
@@ -64,7 +76,7 @@ export async function searchAllSources(query: string, cursor: string | null, sig
     r.status === 'rejected' ? [active[index]] : [])
   responses.forEach((r, index) => { if (r.status === 'rejected') next[active[index]] = cursors[active[index]] })
   return {
-    items: uniqueImages(rankCollectionImages(query, succeeded.flatMap(r => r.value.page.items))),
+    items: uniqueImages(rankCollectionImages(query, interleaveImagePages(succeeded.map(r => r.value.page.items)))),
     cursor: Object.values(next).some(value => typeof value === 'string') ? JSON.stringify(next) : null,
     unavailableSources,
   }
