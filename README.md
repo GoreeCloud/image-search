@@ -1,6 +1,6 @@
 # Image Search
 
-A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a polished, Pinterest-inspired masonry interface with a single shared React/TypeScript experience and a minimal Tauri 2 native shell.
+A GoreeCloud visual discovery app in development, with a **web/PWA interface** and experimental **Linux and Android Tauri packages**. Its shared React/TypeScript interface runs in a WebView on those packaged targets; these packages are not yet native-complete under GoreeCloud's operating-system implementation requirements.
 
 ## Available capabilities
 
@@ -9,7 +9,7 @@ A GoreeCloud visual discovery app for **web, Linux, and Android**. It uses a pol
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
-- Dark Glaze-inspired styling, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts.
+- Dark/light appearance, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts. Full GoreeCloud UI (GC UI) integration remains unverified.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
@@ -34,7 +34,7 @@ npm run build
 
 ### Install the web app
 
-Serve the production `dist/` directory over HTTPS (or use localhost during development). On supported browsers, use **Install app** / **Add to Home screen** to install the PWA. The service worker precaches only same-origin application assets: it does not cache third-party image results, user searches, or raw images. Native Linux/Android Tauri packaging remains separate.
+Serve the production `dist/` directory over HTTPS (or use localhost during development). On supported browsers, use **Install app** / **Add to Home screen** to install the PWA. The service worker precaches only same-origin application assets: it does not cache third-party image results, user searches, or raw images. Experimental Linux/Android Tauri packaging remains separate and is not a substitute for genuine native applications.
 
 ## Linux
 
@@ -77,7 +77,7 @@ No API keys are embedded in client code. Future commercial search providers shou
 
 ## Acceptance status
 
-This is an initial development implementation. It must not be called production Stable without platform-runtime testing, security review, source availability checks, release signing, install/upgrade testing, and acceptance verification.
+This is an initial development implementation. **Neither a green CI run nor a Tauri DEB/AppImage/APK proves native operating-system conformance or an Anchor release.** The current packaged WebView UI is not native-complete; platform-targeted implementations and runtime acceptance remain required. Before Anchor qualification, verify live source availability and partial failures, security/privacy, accessibility, native platform behavior, signing and update continuity, installation, recovery, and the applicable nine-system integration requirements. See [native release acceptance](docs/native-release-acceptance.md).
 
 ## License
 
