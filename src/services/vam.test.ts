@@ -40,3 +40,20 @@ it('requests image-only results with bounded pagination', async () => {
     await expect(searchVam('nature',cursor)).rejects.toThrow('cursor')
   }
 })
+
+it('keeps valid results and rejects malformed restriction flags', async () => {
+  const malformed = { ...fixture, systemNumber: 'O555', _primaryTitle: 42, _primaryMaker: { name: 99 } }
+  const invalidFlags = { ...fixture, systemNumber: 'O556', _warningTypes: 'unknown' }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true, json: async () => ({ records: [malformed, invalidFlags, fixture], info: { pages: 1 } }),
+  }))
+  const page = await searchVam('nature', null)
+  expect(page.items).toHaveLength(2)
+  expect(page.items[0]).toMatchObject({ title: 'Untitled museum object', creator: 'Maker not specified' })
+  expect(page.items[1].title).toBe('Nature')
+})
+
+it('rejects a null API envelope with an actionable provider error', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => null }))
+  await expect(searchVam('nature', null)).rejects.toThrow('Invalid Victoria and Albert Museum response')
+})

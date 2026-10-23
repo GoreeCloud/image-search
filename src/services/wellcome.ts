@@ -39,6 +39,10 @@ function trustedLicense(raw: unknown): string | null {
   } catch { return null }
 }
 
+function safeText(value: unknown, fallback: string, limit: number): string {
+  return typeof value === 'string' && value.trim() ? value.trim().slice(0, limit) : fallback
+}
+
 export function normalizeWellcome(record: WellcomeImage): ImageResult | null {
   if (!record || typeof record.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(record.id)) return null
   const workId = record.source?.id
@@ -46,19 +50,21 @@ export function normalizeWellcome(record: WellcomeImage): ImageResult | null {
   const imageId = iiifIdentifier(record.thumbnail?.url)
   if (!imageId) return null
   const access = record.thumbnail?.accessConditions
-  if (Array.isArray(access) && access.length && !access.some(item => item.status?.id === 'open')) return null
+  if (access !== undefined && !Array.isArray(access)) return null
+  if (Array.isArray(access) && access.length && !access.some(item => item?.status?.id === 'open')) return null
   const base = `https://iiif.wellcomecollection.org/image/${imageId}`
-  const ratio = Number(record.aspectRatio)
-  const dimensionsKnown = Number.isFinite(ratio) && ratio > 0.05 && ratio < 20
+  const ratio = record.aspectRatio
+  const dimensionsKnown = typeof ratio === 'number' && Number.isFinite(ratio) && ratio > 0.05 && ratio < 20
   return {
     id: `wellcome:${record.id}`,
-    title: (record.source?.title || 'Untitled collection image').slice(0, 180),
-    description: (record.thumbnail?.credit || 'Wellcome Collection').slice(0, 320),
+    title: safeText(record.source?.title, 'Untitled collection image', 180),
+    description: safeText(record.thumbnail?.credit, 'Wellcome Collection', 320),
     url: `${base}/full/full/0/default.jpg`,
     thumbnailUrl: `${base}/full/400,/0/default.jpg`,
     sourceUrl: `https://wellcomecollection.org/works/${workId}`,
-    creator: (record.source?.contributors?.[0]?.agent?.label || record.thumbnail?.credit || 'Wellcome Collection').slice(0, 180),
-    license: (record.thumbnail?.license?.label || 'Check source for image rights').slice(0, 180),
+    creator: safeText(record.source?.contributors?.[0]?.agent?.label,
+      safeText(record.thumbnail?.credit, 'Wellcome Collection', 180), 180),
+    license: safeText(record.thumbnail?.license?.label, 'Check source for image rights', 180),
     licenseUrl: trustedLicense(record.thumbnail?.license?.url),
     width: dimensionsKnown ? Math.round(ratio * 1000) : 1000,
     height: 1000,
@@ -77,8 +83,11 @@ export async function searchWellcome(query: string, cursor: string | null, signa
   const params = new URLSearchParams({ query: q, pageSize: String(PAGE_SIZE), page: String(page) })
   const response = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!response.ok) throw new Error(`Wellcome Collection unavailable (HTTP ${response.status}).`)
-  const payload = await response.json() as WellcomeResponse
-  const items = (Array.isArray(payload.results) ? payload.results : []).slice(0, PAGE_SIZE)
+  const payload = await response.json() as WellcomeResponse | null
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.results)) {
+    throw new Error('Invalid Wellcome Collection response')
+  }
+  const items = payload.results.slice(0, PAGE_SIZE)
     .map(normalizeWellcome).filter((item): item is ImageResult => item !== null)
   const totalPages = Number(payload.totalPages)
   const more = Number.isSafeInteger(totalPages) && totalPages > page

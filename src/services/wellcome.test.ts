@@ -49,3 +49,29 @@ it('queries anonymously and pages with strictly bounded cursors', async () => {
     await expect(searchWellcome('nature',cursor)).rejects.toThrow('cursor')
   }
 })
+
+it('preserves valid image results when provider metadata has unexpected types', async () => {
+  const malformed = {
+    ...fixture,
+    id: 'malformed1',
+    aspectRatio: 'square',
+    source: { ...fixture.source, title: 42, contributors: [{ agent: { label: 99 } }] },
+    thumbnail: { ...fixture.thumbnail, credit: 123, license: { ...fixture.thumbnail.license, label: 7 } },
+  }
+  const invalidAccess = { ...fixture, id: 'invalidAccess', thumbnail: { ...fixture.thumbnail, accessConditions: 'restricted' } }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true, json: async () => ({ results: [malformed, invalidAccess, fixture], totalPages: 1 }),
+  }))
+  const page = await searchWellcome('nature', null)
+  expect(page.items).toHaveLength(2)
+  expect(page.items[0]).toMatchObject({
+    title: 'Untitled collection image', description: 'Wellcome Collection',
+    creator: 'Wellcome Collection', license: 'Check source for image rights', dimensionsKnown: false,
+  })
+  expect(page.items[1].title).toBe('The human nature library.')
+})
+
+it('reports malformed provider response envelopes explicitly', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ totalPages: 1 }) }))
+  await expect(searchWellcome('nature', null)).rejects.toThrow('Invalid Wellcome Collection response')
+})
