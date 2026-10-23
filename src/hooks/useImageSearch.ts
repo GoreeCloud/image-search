@@ -10,6 +10,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
+  const [unavailableSources, setUnavailableSources] = useState<string[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const controllerRef = useRef<AbortController | null>(null)
   const requestRef = useRef(0)
@@ -25,6 +26,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     setCursor(null)
     setError(null)
     setLoadMoreError(null)
+    setUnavailableSources([])
     setLoading(true)
     setLoadingMore(false)
 
@@ -33,6 +35,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
         if (controller.signal.aborted || request !== requestRef.current) return
         setImages(uniqueImages(result.items))
         setCursor(result.cursor)
+        setUnavailableSources(result.unavailableSources ?? [])
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted || request !== requestRef.current) return
@@ -57,6 +60,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
         return uniqueImages([...prev, ...result.items])
       })
       setCursor(result.cursor)
+      setUnavailableSources(result.unavailableSources ?? [])
     } catch (reason) {
       if (request === requestRef.current && !controllerRef.current?.signal.aborted) {
         setLoadMoreError(reason instanceof Error ? reason.message : 'Could not load more images.')
@@ -69,5 +73,5 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     }
   }, [cursor, error, loading, loadingMore, query, source])
 
-  return { images, loading, loadingMore, error, loadMoreError, hasMore: Boolean(cursor), loadMore }
+  return { images, loading, loadingMore, error, loadMoreError, unavailableSources, hasMore: Boolean(cursor), loadMore }
 }

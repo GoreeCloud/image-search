@@ -32,7 +32,54 @@ it('collects available providers when another provider fails', async () => {
   expect(page.items.map(x => x.id)).toEqual(['example','art','museum','met'])
   expect(page.cursor).toContain('openverse')
   expect(page.cursor).toContain('commons')
+  expect(page.unavailableSources).toEqual(['commons'])
 })
+it('recovers a failed collection when a user retries the preserved cursor', async () => {
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) {
+    vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  }
+  vi.mocked(searchOpenverse).mockResolvedValue({items:[image],cursor:null})
+  vi.mocked(searchCommons).mockRejectedValueOnce(new Error('provider timeout'))
+  const initial = await searchAllSources('nature',null)
+  expect(initial.unavailableSources).toEqual(['commons'])
+  expect(initial.cursor).not.toBeNull()
+  vi.mocked(searchCommons).mockResolvedValue({
+    items:[{...image,id:'commons:new',provider:'Wikimedia Commons'}],cursor:null,
+  })
+  const retried = await searchAllSources('nature',initial.cursor)
+  expect(retried.unavailableSources).toEqual([])
+  expect(retried.items.map(item=>item.id)).toEqual(['commons:new'])
+  expect(retried.cursor).toBeNull()
+})
+
+it('fails closed on malformed or oversized aggregate pagination before provider dispatch', async () => {
+  const invalid = [
+    '{', '[]', 'false', 'null', '42',
+    JSON.stringify({unknown: '1'}),
+    '{"__proto__":"1"}',
+    JSON.stringify({openverse: 12}),
+    JSON.stringify({commons: {continue: 'x'}}),
+    JSON.stringify({openverse: 'x'.repeat(2050)}),
+    'x'.repeat(8193),
+    JSON.stringify({openverse: 'bad' + String.fromCharCode(10) + 'value'}),
+  ]
+  for (const cursor of invalid) {
+    await expect(searchAllSources('flowers', cursor)).rejects.toThrow('Invalid image page cursor')
+  }
+  expect(searchOpenverse).not.toHaveBeenCalled()
+  expect(searchCommons).not.toHaveBeenCalled()
+})
+
+it('accepts a bounded aggregate cursor and dispatches only its active sources', async () => {
+  vi.mocked(searchOpenverse).mockResolvedValue({items:[image],cursor:null})
+  const page=await searchAllSources('flowers',JSON.stringify({openverse:'2',commons:null}))
+  expect(page.items).toHaveLength(1)
+  expect(searchOpenverse).toHaveBeenCalledTimes(1)
+  expect(searchOpenverse).toHaveBeenCalledWith('flowers','2',undefined)
+  expect(searchCommons).not.toHaveBeenCalled()
+  expect(page.cursor).toBeNull()
+})
+
 it('handles every provider failing', async () => {
   for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) vi.mocked(mock).mockRejectedValue(new Error('down'))
   await expect(searchAllSources('nature',null)).rejects.toThrow('temporarily unavailable')

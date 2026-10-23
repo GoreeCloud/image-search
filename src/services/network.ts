@@ -17,9 +17,15 @@ export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeou
     clearTimeout(timer)
     signal?.removeEventListener('abort', abortRequest)
   }
+  // A fast provider may exceed safe JSON limits even before the timeout.
+  const maxResponseBytes = 4 * 1024 * 1024
   try {
     const response = await fetch(url, {
       method: 'GET',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+      redirect: 'error',
+      cache: 'no-store',
       signal: controller.signal,
       headers: { Accept: 'application/json', ...extraHeaders },
     })
@@ -29,6 +35,7 @@ export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeou
     }
     // Keep the same timeout in force until consumers finish/cancel the body.
     const reader = response.body.getReader()
+    let receivedBytes = 0
     const body = new ReadableStream<Uint8Array>({
       async pull(sink) {
         try {
@@ -36,7 +43,16 @@ export async function fetchWithTimeout(url: string, signal?: AbortSignal, timeou
           if (chunk.done) {
             release()
             sink.close()
-          } else if (chunk.value) sink.enqueue(chunk.value)
+          } else if (chunk.value) {
+            receivedBytes += chunk.value.byteLength
+            if (receivedBytes > maxResponseBytes) {
+              release()
+              void reader.cancel().catch(() => {})
+              sink.error(new Error('Image source response exceeds the 4 MB safety limit.'))
+              return
+            }
+            sink.enqueue(chunk.value)
+          }
         } catch (reason) {
           release()
           sink.error(timedOut ? new Error('Image source timed out. Please retry.') : reason)
