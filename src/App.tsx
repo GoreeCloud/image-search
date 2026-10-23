@@ -5,6 +5,7 @@ import { ImageDetail } from './components/ImageDetail'
 import { SettingsPage } from './components/SettingsPage'
 import { useThemeMode } from './hooks/useThemeMode'
 import { hasEuropeanaKey } from './services/apiKeys'
+import { isModernTechnologyQuery } from './services/relevance'
 import { downloadOriginalImage, isNativeAndroidDownload } from './services/downloadImage'
 import './settings.css'
 import { useImageSearch } from './hooks/useImageSearch'
@@ -53,6 +54,7 @@ export default function App() {
   const sentinel = useRef<HTMLDivElement>(null)
 
   const { images, loading, loadingMore, error, loadMoreError, unavailableSources, hasMore, loadMore } = useImageSearch(query, refresh, source)
+  const collectionLimitedQuery = source === 'all' && isModernTechnologyQuery(query)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
   const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
   const currentIndex = visible.findIndex((item) => item.id === detailId)
@@ -178,7 +180,7 @@ export default function App() {
             <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
             <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? `${hasEuropeanaKey() ? 'Nine' : 'Eight'} image collections` : SOURCE_LABELS[source]) : `${saved.length} saved images`}</div>
+          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? (collectionLimitedQuery ? 'Screenshot collections · 2 sources' : `${hasEuropeanaKey() ? 'Nine' : 'Eight'} image collections`) : SOURCE_LABELS[source]) : `${saved.length} saved images`}</div>
         </div>
 
         {view === 'explore' &&
@@ -221,9 +223,9 @@ export default function App() {
         </div>
 
         {storageError && <div className="message-bar" role="status">Saved images could not be persisted on this device. Check available storage or browser privacy settings.</div>}
-        {view === 'explore' && !loading && unavailableSources.length > 0 && <div className="message-bar" role="status">
-          Some image collections are temporarily unavailable: {unavailableSources.map(name => SOURCE_LABELS[name as SingleSource] || 'Image source').join(', ')}.
-          {hasMore ? ' Choose Show more images to continue and retry these sources.' : ' Try again later.'}
+        {view === 'explore' && !loading && unavailableSources.length > 0 && <div className="message-bar source-warning" role="status">
+          <span>{unavailableSources.map(name => SOURCE_LABELS[name as SingleSource] || 'Image source').join(', ')} {unavailableSources.length === 1 ? 'is' : 'are'} temporarily unavailable. Results may be incomplete.</span>
+          <button type="button" disabled={loadingMore} onClick={() => hasMore ? void loadMore() : setRefresh(n => n + 1)}><RotateCcw size={14}/> {loadingMore ? 'Retrying…' : 'Retry source'}</button>
         </div>}
 
         {error && view === 'explore' && <div className="error-panel" role="alert"><span>We couldn't load the images.</span><p>{error}</p><button type="button" onClick={() => setRefresh((n) => n + 1)}><RotateCcw size={16}/> Try again</button></div>}
@@ -239,9 +241,9 @@ export default function App() {
             onToggleSaved={() => { toggleSaved(item); setToast(isSaved(item.id) ? 'Removed from saved' : 'Added to saved') }}/>)}
         </div> : !error && <div className="empty-panel">
           <div className="empty-icon"><Images size={30}/></div>
-          <h3>{view === 'saved' ? 'Your collection starts here.' : 'No images found.'}</h3>
-          <p>{view === 'saved' ? 'Save images while browsing and they will appear here.' : 'Try another search or change the orientation filter.'}</p>
-          <button type="button" onClick={() => { if (view === 'saved') setView('explore'); else setOrientation('all') }}>{view === 'saved' ? 'Explore images' : 'Show all images'}</button>
+          <h3>{view === 'saved' ? 'Your collection starts here.' : collectionLimitedQuery && images.length === 0 ? 'No matching screenshots yet.' : 'No images found.'}</h3>
+          <p>{view === 'saved' ? 'Save images while browsing and they will appear here.' : collectionLimitedQuery && images.length === 0 ? 'Our image collections have limited coverage of current software interfaces. Try another phrase or select a specific source.' : 'Try another search or change the orientation filter.'}</p>
+          <button type="button" onClick={() => { if (view === 'saved') setView('explore'); else if (collectionLimitedQuery && images.length === 0) searchRef.current?.focus(); else setOrientation('all') }}>{view === 'saved' ? 'Explore images' : collectionLimitedQuery && images.length === 0 ? 'Refine search' : 'Show all images'}</button>
         </div>}
 
         <div ref={sentinel} className="scroll-sentinel" />

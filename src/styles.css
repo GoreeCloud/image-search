@@ -91,6 +91,10 @@ h1 em { font-style: normal; color: #bfafff; }
 .empty-icon { margin: auto auto 19px; height: 62px; width: 62px; color: #afa2f6; border: 1px solid #4b4058; background: #282231; display: grid; place-items: center; border-radius: 19px; }
 .empty-panel h3 { font-size: 22px; margin: 0; }
 .message-bar { margin: 14px 0; padding: 13px 17px; color: #ffd2ab; border: 1px solid #715039; border-radius: 10px; background: #31241c; font-size: 12px; }
+.source-warning { display: flex; align-items: center; justify-content: space-between; gap: 12px; line-height: 1.5; }
+.source-warning button { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border: 1px solid #b98b66; border-radius: 8px; background: #503525; color: #ffdfbf; padding: 7px 10px; font-size: 12px; font-weight: 650; }
+.source-warning button:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 600px) { .source-warning { align-items: flex-start; } .source-warning button { flex-shrink: 0; } }
 .scroll-sentinel { height: 1px; }
 .load-row { margin: 36px auto; display: flex; justify-content: center; }
 .load-row button { color: #c1b5ee; background: #22202b; border: 1px solid #433d51; border-radius: 12px; padding: 13px 20px; display: flex; gap: 10px; align-items: center; font-weight: 660; }

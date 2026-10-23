@@ -9,6 +9,7 @@ import { searchWellcome } from './wellcome'
 import { searchVam } from './vam'
 import { searchEuropeana } from './europeana'
 import { hasEuropeanaKey } from './apiKeys'
+import { rankCollectionImages, sourcesForQuery } from './relevance'
 
 export const SOURCE_SEARCH = { openverse: searchOpenverse, commons: searchCommons, loc: searchLoC, nasa: searchNasa, cleveland: searchCma, met: searchMet, wellcome: searchWellcome, vam: searchVam, europeana: searchEuropeana }
 export type SingleSource = keyof typeof SOURCE_SEARCH
@@ -25,7 +26,7 @@ export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
 }
 
 export async function searchAllSources(query: string, cursor: string | null, signal?: AbortSignal): Promise<SearchPage> {
-  const sources = (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s => s !== 'europeana' || hasEuropeanaKey())
+  const sources = sourcesForQuery(query, (Object.keys(SOURCE_SEARCH) as SingleSource[]).filter(s => s !== 'europeana' || hasEuropeanaKey()))
   let cursors: MultiCursor
   if (cursor === null) cursors = Object.fromEntries(sources.map(s => [s, ''])) as MultiCursor
   else {
@@ -63,7 +64,7 @@ export async function searchAllSources(query: string, cursor: string | null, sig
     r.status === 'rejected' ? [active[index]] : [])
   responses.forEach((r, index) => { if (r.status === 'rejected') next[active[index]] = cursors[active[index]] })
   return {
-    items: uniqueImages(succeeded.flatMap(r => r.value.page.items)),
+    items: uniqueImages(rankCollectionImages(query, succeeded.flatMap(r => r.value.page.items))),
     cursor: Object.values(next).some(value => typeof value === 'string') ? JSON.stringify(next) : null,
     unavailableSources,
   }
