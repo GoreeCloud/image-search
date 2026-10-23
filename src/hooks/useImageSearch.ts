@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SOURCE_SEARCH, searchAllSources, uniqueImages } from '../services/providers'
+import { searchDiscovery } from '../services/discovery'
 import type { ImageSource } from '../services/providers'
 import type { ImageResult } from '../types'
 
 export function useImageSearch(query: string, refreshKey = 0, source: ImageSource = 'all') {
-  const searchProvider = source === 'all' ? searchAllSources : SOURCE_SEARCH[source]
+  const searchProvider = source === 'all' ? (query.trim() ? searchAllSources : searchDiscovery) : SOURCE_SEARCH[source]
+  const effectiveQuery = query.trim() || 'nature'
   const [images, setImages] = useState<ImageResult[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -30,7 +32,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     setLoading(true)
     setLoadingMore(false)
 
-    searchProvider(query, null, controller.signal)
+    searchProvider(effectiveQuery, null, controller.signal)
       .then((result) => {
         if (controller.signal.aborted || request !== requestRef.current) return
         setImages(uniqueImages(result.items))
@@ -54,7 +56,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
     const request = requestRef.current
 
     try {
-      const result = await searchProvider(query, cursor, controllerRef.current?.signal)
+      const result = await searchProvider(effectiveQuery, cursor, controllerRef.current?.signal)
       if (request !== requestRef.current || controllerRef.current?.signal.aborted) return
       setImages((prev) => {
         return uniqueImages([...prev, ...result.items])
@@ -71,7 +73,7 @@ export function useImageSearch(query: string, refreshKey = 0, source: ImageSourc
         moreBusyRef.current = false
       }
     }
-  }, [cursor, error, loading, loadingMore, query, source])
+  }, [cursor, effectiveQuery, error, loading, loadingMore, query, source])
 
   return { images, loading, loadingMore, error, loadMoreError, unavailableSources, hasMore: Boolean(cursor), loadMore }
 }

@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, Bookmark, Compass, Images, Search, SlidersHorizontal, Sparkles, X, RotateCcw, Settings2 } from 'lucide-react'
+import { ArrowDown, Bookmark, ChevronDown, Compass, Images, Search, SlidersHorizontal, X, RotateCcw, Settings2 } from 'lucide-react'
 import { ImageTile } from './components/ImageTile'
 import { ImageDetail } from './components/ImageDetail'
 import { SettingsPage } from './components/SettingsPage'
@@ -7,14 +7,22 @@ import { useThemeMode } from './hooks/useThemeMode'
 import { hasEuropeanaKey } from './services/apiKeys'
 import { isModernTechnologyQuery } from './services/relevance'
 import { downloadOriginalImage, isNativeAndroidDownload } from './services/downloadImage'
+import './styles.css'
 import './settings.css'
+import './discovery.css'
 import { useImageSearch } from './hooks/useImageSearch'
 import { useSavedImages } from './hooks/useSavedImages'
 import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard'
 import type { ImageSource, SingleSource } from './services/providers'
 import type { ImageResult } from './types'
 
-const TOPICS = ['Nature', 'Architecture', 'Interiors', 'Travel', 'Wildlife', 'Flowers', 'Textures']
+const TOPICS = [
+  { label: 'All images', query: '' },
+  { label: 'Nature', query: 'nature' },
+  { label: 'Design', query: 'design architecture' },
+  { label: 'Space', query: 'space nebula galaxy' },
+  { label: 'Travel', query: 'travel destinations' },
+]
 const SOURCE_LABELS: Record<SingleSource, string> = {
   openverse: 'Openverse', commons: 'Wikimedia Commons', loc: 'Library of Congress',
   nasa: 'NASA', cleveland: 'Cleveland Museum of Art', met: 'The Met', europeana: 'Europeana',
@@ -39,10 +47,12 @@ function isOrientation(image: ImageResult, orientation: Orientation) {
 }
 
 export default function App() {
-  const [input, setInput] = useState('nature')
-  const [query, setQuery] = useState('nature')
+  const [input, setInput] = useState('')
+  const [query, setQuery] = useState('')
+  const [activeTopic, setActiveTopic] = useState<string | null>('All images')
   const [view, setView] = useState<View>('explore')
   const [orientation, setOrientation] = useState<Orientation>('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
@@ -92,6 +102,7 @@ export default function App() {
     const next = input.trim()
     if (!next) { searchRef.current?.focus(); return }
     setView('explore')
+    setActiveTopic(null)
     setOrientation('all')
     setQuery(next)
     if (query === next) setRefresh((n) => n + 1)
@@ -99,13 +110,14 @@ export default function App() {
     searchRef.current?.blur()
   }
 
-  function chooseTopic(topic: string) {
-    setInput(topic.toLowerCase())
-    setQuery(topic.toLowerCase())
+  function chooseTopic(topic: (typeof TOPICS)[number]) {
+    setInput('')
+    setQuery(topic.query)
+    setActiveTopic(topic.label)
     setView('explore')
     setOrientation('all')
     setDetailId(null)
-    if (query === topic.toLowerCase()) setRefresh((n) => n + 1)
+    if (query === topic.query) setRefresh((n) => n + 1)
   }
 
   function onApiChange() {
@@ -153,17 +165,10 @@ export default function App() {
     <div className={keyboardOpen ? "app-shell ime-open" : "app-shell"}>
       <header className="topbar">
         <div className="topbar-inner">
-          <button type="button" className="brand" onClick={() => { setView('explore'); setOrientation('all') }} aria-label="Image Search home">
+          <button type="button" className="brand" onClick={() => { setView('explore'); setOrientation('all') }} aria-label="GoreeCloud Image Search home">
             <span className="brand-mark"><img src="/app-icon.svg" alt="" /></span>
-            <span className="brand-name">image<span>search</span><b className="brand-beta">BETA</b></span>
+            <span className="brand-name"><small>GoreeCloud</small><strong>Image Search</strong></span>
           </button>
-          <form className="search-form" role="search" onSubmit={submitSearch}>
-            <Search size={19} className="search-icon" />
-            <input ref={searchRef} autoComplete="off" aria-label="Search images" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Search millions of images..." maxLength={180} />
-            {input && <button className="clear-search" onClick={() => { setInput(''); searchRef.current?.focus() }} type="button" aria-label="Clear search"><X size={16} /></button>}
-            <span className="search-shortcut" aria-hidden="true">⌘ K</span>
-            <button className="search-submit" type="submit">Search</button>
-          </form>
           <nav className="topnav" aria-label="Main navigation">
             <button type="button" className={`nav-link ${view === 'explore' ? 'selected' : ''}`} onClick={() => setView('explore')}><Compass size={18}/><span>Explore</span></button>
             <button type="button" className={`nav-link ${view === 'saved' ? 'selected' : ''}`} onClick={() => setView('saved')}><Bookmark size={18}/><span>Saved</span>{saved.length > 0 && <em>{saved.length}</em>}</button>
@@ -174,32 +179,43 @@ export default function App() {
 
       <main className="page-main">
         {view === 'settings' ? <SettingsPage theme={theme} onThemeChange={setTheme} onApiChange={onApiChange}/> : <>
-        <div className="headline-row">
-          <div>
-            <div className="eyebrow"><Sparkles size={14}/>{view === 'explore' ? 'YOUR VISUAL DISCOVERY SPACE' : 'YOUR PERSONAL COLLECTION'}</div>
-            <h1>{view === 'explore' ? <>A world of <em>inspiration.</em></> : <>All your <em>favorites.</em></>}</h1>
-            <p>{view === 'explore' ? 'Explore stunning imagery. Find your next idea.' : 'The images you love, collected in one beautiful place.'}</p>
+        <section className="discovery-hero" aria-label="Visual discovery">
+          <div className="headline-row">
+            <h1>{view === 'explore' ? <>Discover something <em>wonderful.</em></> : <>Your saved <em>wonders.</em></>}</h1>
           </div>
-          <div className="source-pill"><span className="live-indicator"/> {view === 'explore' ? (source === 'all' ? (collectionLimitedQuery ? 'Screenshot collections · 2 sources' : `${hasEuropeanaKey() ? 'Nine' : 'Eight'} image collections`) : SOURCE_LABELS[source]) : `${saved.length} saved images`}</div>
-        </div>
-
-        {view === 'explore' &&
-          <div className="topics" role="group" aria-label="Suggested searches">
-            <span className="topics-label">DISCOVER</span>
-            {TOPICS.map((topic) => <button type="button" className={query.toLowerCase() === topic.toLowerCase() ? 'topic active' : 'topic'} key={topic} onClick={() => chooseTopic(topic)}>{topic}</button>)}
-          </div>
-        }
+          {view === 'explore' && <>
+            <div className="hero-search-row">
+              <form className="search-form" role="search" onSubmit={submitSearch}>
+                <Search size={23} className="search-icon" aria-hidden="true" />
+                <input ref={searchRef} autoComplete="off" enterKeyHint="search" aria-label="Search images" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Search images, ideas, places..." maxLength={180} />
+                {input && <button className="clear-search" onClick={() => { setInput(''); searchRef.current?.focus() }} type="button" aria-label="Clear search"><X size={17} /></button>}
+                <button className="search-submit" type="submit" aria-label="Search images"><Search size={20}/><span>Search</span></button>
+              </form>
+              <button type="button" className={`filter-trigger ${filtersOpen ? 'active' : ''}`} onClick={() => setFiltersOpen((open) => !open)} aria-label="Search filters" aria-expanded={filtersOpen} aria-controls="image-filters"><SlidersHorizontal size={23}/></button>
+            </div>
+            {filtersOpen && <div id="image-filters" className="hero-filter-panel">
+              <label htmlFor="orientation">Image orientation</label>
+              <select id="orientation" value={orientation} onChange={(event) => setOrientation(event.target.value as Orientation)}>
+                {ORIENTATIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <span>Choose a shape to narrow your results.</span>
+            </div>}
+            <div className="topics" role="group" aria-label="Explore categories">
+              {TOPICS.map((topic) => <button type="button" className={activeTopic === topic.label ? 'topic active' : 'topic'} key={topic.label} onClick={() => chooseTopic(topic)} aria-pressed={activeTopic === topic.label}>{topic.label}</button>)}
+            </div>
+          </>}
+        </section>
 
         <div className="results-toolbar">
           <div className="results-title">
-            <h2>{view === 'saved' ? 'Saved collection' : query.trim() ? `Results for “${query.trim()}”` : 'Explore images'}</h2>
+            <h2>{view === 'saved' ? 'Saved' : activeTopic === 'All images' ? 'Explore' : activeTopic ? `Explore ${activeTopic.toLowerCase()}` : `Results for “${query.trim()}”`}</h2>
             <span>{loading && view === 'explore' ? 'Searching…' : `${visible.length} images${view === 'explore' && hasMore ? ' · more to explore' : ''}`}</span>
             {view === 'explore' && !loading && !error && hasMore && <button type="button" className="quick-more" disabled={loadingMore} onClick={() => void loadMore()}>
               {loadingMore ? 'Loading…' : 'Show more images'} <ArrowDown size={14} />
             </button>}
           </div>
           <div className="toolbar-filters">
-          <div className="filter-wrap source-filter"><label htmlFor="source">Source</label>
+          <div className="filter-wrap source-filter"><label htmlFor="source" className="sr-only">Image source</label>
             <select id="source" value={source} onChange={(event) => { setSource(event.target.value as ImageSource); setOrientation('all') }}>
               <option value="all">All sources</option>
               <option value="openverse">Openverse</option>
@@ -212,12 +228,7 @@ export default function App() {
               <option value="vam">Victoria and Albert Museum</option>
               <option value="europeana">Europeana (API key)</option>
             </select>
-          </div>
-          <div className="filter-wrap"><SlidersHorizontal size={16}/>
-            <label htmlFor="orientation">Orientation</label>
-            <select id="orientation" value={orientation} onChange={(event) => setOrientation(event.target.value as Orientation)}>
-              {ORIENTATIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            <ChevronDown size={19} aria-hidden="true" />
           </div>
           </div>
         </div>
@@ -238,6 +249,7 @@ export default function App() {
             onDownload={() => void startImageDownload(item)}
             isDownloading={downloadingId === item.id}
             downloadBusy={downloadingId !== null}
+            onRights={() => setDetailId(item.id)}
             onToggleSaved={() => { toggleSaved(item); setToast(isSaved(item.id) ? 'Removed from saved' : 'Added to saved') }}/>)}
         </div> : !error && <div className="empty-panel">
           <div className="empty-icon"><Images size={30}/></div>

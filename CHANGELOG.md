@@ -1,3 +1,12 @@
+## Unreleased — Android mockup v3 default discovery UI
+
+- Make the owner-provided light indigo/lavender Android design the first-run default while retaining explicit existing Dark Mode preferences.
+- Move search into the hero, add All images/Nature/Design/Space/Travel chips and a functional orientation filter panel, and align mobile Explore/Saved/Settings navigation with the floating bottom dock.
+- Present source labels and Download, Save and rights/attribution actions on each masonry tile, preserving real provider provenance and usage rights.
+- Mix default discovery results from provider-backed topic searches with pagination, deduplication and partial-failure handling; no static mock imagery is passed off as search output.
+- Refresh web, PWA, favicon, and experimental Tauri Android/Linux artwork to match the reference icon.
+- Add default-screen, category/filter, discovery ordering and theme preference regression tests. Actual device/browser visual QA and native Android implementation acceptance remain outstanding.
+
 ## Unreleased — original image download action
 
 - Add Download image to masonry results and image previews. Keep Save as a separate local-bookmark action.
