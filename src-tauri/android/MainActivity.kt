@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 
 /**
@@ -15,6 +16,10 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // The system-bar backdrop stays pale even when the WebView switches to dark mode.
+        // Request dark status-bar glyphs in both modes so time and system icons remain legible.
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         val container = findViewById<View>(android.R.id.content)
         ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
             val types = WindowInsetsCompat.Type.systemBars() or
