@@ -52,6 +52,26 @@ it('recovers a failed collection when a user retries the preserved cursor', asyn
   expect(retried.cursor).toBeNull()
 })
 
+it('stops a stalled source cursor without blocking other sources from advancing', async () => {
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) {
+    vi.mocked(mock).mockResolvedValue({ items: [], cursor: null })
+  }
+  vi.mocked(searchOpenverse).mockResolvedValue({ items: [image], cursor: '2' })
+  vi.mocked(searchCommons)
+    .mockResolvedValueOnce({ items: [], cursor: '5' })
+    .mockResolvedValueOnce({ items: [], cursor: '6' })
+    .mockResolvedValue({ items: [], cursor: null })
+
+  const first = await searchAllSources('nature', null)
+  const second = await searchAllSources('nature', first.cursor)
+  expect(JSON.parse(second.cursor!)).toMatchObject({ openverse: null, commons: '6' })
+
+  const third = await searchAllSources('nature', second.cursor)
+  expect(third.cursor).toBeNull()
+  expect(searchOpenverse).toHaveBeenCalledTimes(2)
+  expect(searchCommons).toHaveBeenCalledTimes(3)
+})
+
 it('fails closed on malformed or oversized aggregate pagination before provider dispatch', async () => {
   const invalid = [
     '{', '[]', 'false', 'null', '42',
