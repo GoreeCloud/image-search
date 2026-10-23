@@ -10,6 +10,8 @@ export type ImageResult = {
   licenseUrl: string | null
   width: number
   height: number
+  /** Unknown dimensions use a neutral display ratio; orientation filters omit them. */
+  dimensionsKnown?: boolean
   provider: string
 }
 

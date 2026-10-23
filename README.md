@@ -4,8 +4,8 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 
 ## Available capabilities
 
-- Search **six keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, and historical Library of Congress photographs, CC0 Cleveland Museum of Art collections, and CC0 Metropolitan Museum of Art collections. Filter to any individual source from the Source menu. No provider API key is embedded or required.
-- Adaptive masonry grid with original aspect ratios, skeletons, infinite pagination and retry states.
+- Search **eight keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, historical Library of Congress photographs, Cleveland Museum of Art, Metropolitan Museum of Art, Wellcome Collection, and the Victoria and Albert Museum. Filter to any individual source from the Source menu. No provider API key is embedded or required.
+- Adaptive masonry grid, skeletons, bounded pagination, and retry states. **Show more images** is available beside the results count, even when an unavailable provider pauses automatic pagination; another control appears below the gallery.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
@@ -16,7 +16,7 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
-**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; and the Cleveland Museum of Art and Metropolitan Museum of Art contribute CC0 collection images. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
+**Scope:** Openverse indexes openly licensed imagery from many websites; Wikimedia Commons indexes shared media; NASA offers mission and science photography; the Library of Congress offers historical photographs with item-specific reuse rights; Cleveland Museum of Art and the Met contribute CC0 images; Wellcome Collection adds history, science and medicine; and the Victoria and Albert Museum adds art and design. **Wellcome and V&A imagery is not necessarily free to reuse**: image-specific rights and source pages are displayed, and V&A records require checking their rights terms. The newer collections may lack exact dimensions, so such records are excluded from orientation-specific filters instead of being incorrectly labelled square. These collections are not an unrestricted web crawler, and API limits or missing thumbnails can reduce coverage. “All sources” sends the search query to each provider, tolerates individual provider failure and deduplicates results. A provider-filtered query goes only to the selected provider. Saved images contain URLs and metadata, not offline image binaries. NASA content follows its own media usage policies, rather than being universally CC0.
 
 ## Requirements
 
@@ -58,13 +58,13 @@ Android requires SDK + NDK + a connected emulator/device for actual runtime test
 
 ## Search provider and image rights
 
-The browser calls `https://api.openverse.org/v1/images/` (anonymous limits apply), `https://commons.wikimedia.org/w/api.php` with `origin=*`, `https://images-api.nasa.gov/search`, and `https://www.loc.gov/photos/?fo=json, https://openaccess-api.clevelandart.org/api/artworks/, and the current Metropolitan Museum of Art v1.1 paginated search endpoint.`. Previews come from provider-controlled hosts, not through our infrastructure. Openverse third-party originals are not fetched automatically as thumbnail fallbacks. Each image links to its original source page for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
+The browser calls the official HTTPS APIs for [Openverse](https://api.openverse.org/v1/images/), [Wikimedia Commons](https://commons.wikimedia.org/w/api.php), [NASA](https://images-api.nasa.gov/search), [Library of Congress](https://www.loc.gov/photos/?fo=json), [Cleveland Museum of Art](https://openaccess-api.clevelandart.org/api/artworks/), [Metropolitan Museum of Art](https://collectionapi.metmuseum.org/public/collection/v1.1/search), [Wellcome Collection](https://developers.wellcomecollection.org/api/catalogue), and [Victoria and Albert Museum](https://developers.vam.ac.uk/guide/v2/quick-start.html). Wellcome and V&A images use only their corresponding official IIIF image hosts. Previews come from provider-controlled hosts, not through our infrastructure. Openverse third-party originals are not fetched automatically as thumbnail fallbacks. Each image links to its source record for authoritative authorship, license, and attribution terms. Images are not claimed to be free of restrictions; verify requirements before reuse.
 
 No API keys are embedded in client code. Future commercial search providers should use a separate secured proxy with appropriate quotas, caching, licensing and terms compliance.
 
 ## Architecture
 
-- `src/services/openverse.ts`, `commons.ts`, `nasa.ts`, `loc.ts`, `cleveland.ts`: source-specific API adapters, response normalization, URL trust boundaries and pagination.
+- `src/services/openverse.ts`, `commons.ts`, `nasa.ts`, `loc.ts`, `cleveland.ts`, `met.ts`, `wellcome.ts`, `vam.ts`: source-specific API adapters, response normalization, URL trust boundaries and pagination.
 - `src/services/providers.ts`: parallel federated search with partial-failure tolerance and stable result deduplication.
 - `src/services/imageFallback.ts`: same-provider trusted preview recovery.
 - `src-tauri/android/MainActivity.kt`: Android native safe-area application; `scripts/prepare-android.sh` installs it into generated Gradle sources.

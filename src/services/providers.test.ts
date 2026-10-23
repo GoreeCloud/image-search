@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { uniqueImages, searchAllSources } from './providers'
 import { searchOpenverse } from './openverse'
 import { searchCommons } from './commons'
@@ -6,6 +6,8 @@ import { searchLoC } from './loc'
 import { searchNasa } from './nasa'
 import { searchCma } from './cleveland'
 import { searchMet } from './met'
+import { searchWellcome } from './wellcome'
+import { searchVam } from './vam'
 import { searchEuropeana } from './europeana'
 import { setEuropeanaKey } from './apiKeys'
 
@@ -15,8 +17,14 @@ vi.mock('./loc', () => ({ searchLoC: vi.fn() }))
 vi.mock('./nasa', () => ({ searchNasa: vi.fn() }))
 vi.mock('./cleveland', () => ({ searchCma: vi.fn() }))
 vi.mock('./met', () => ({ searchMet: vi.fn() }))
+vi.mock('./wellcome', () => ({ searchWellcome: vi.fn() }))
+vi.mock('./vam', () => ({ searchVam: vi.fn() }))
 vi.mock('./europeana', () => ({ searchEuropeana: vi.fn() }))
 afterEach(() => { vi.clearAllMocks(); setEuropeanaKey('') })
+beforeEach(() => {
+  vi.mocked(searchWellcome).mockResolvedValue({items:[],cursor:null})
+  vi.mocked(searchVam).mockResolvedValue({items:[],cursor:null})
+})
 const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thumbnailUrl:'https://example.com/a.jpg',sourceUrl:'https://example.com',description:'',creator:'x',license:'x',licenseUrl:null,width:4,height:3,provider:'test'}
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
@@ -101,7 +109,7 @@ it('accepts a bounded aggregate cursor and dispatches only its active sources', 
 })
 
 it('handles every provider failing', async () => {
-  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) vi.mocked(mock).mockRejectedValue(new Error('down'))
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet, searchWellcome, searchVam]) vi.mocked(mock).mockRejectedValue(new Error('down'))
   await expect(searchAllSources('nature',null)).rejects.toThrow('temporarily unavailable')
 })
 
@@ -113,4 +121,17 @@ it('includes optional Europeana only when a session key is configured', async ()
   setEuropeanaKey('sample-client-key')
   const after=await searchAllSources('flowers',null)
   expect(after.items.map(item=>item.id)).toContain('europeana')
+})
+
+it('includes both new no-key museum collections in all-source results', async () => {
+  for (const mock of [searchOpenverse, searchCommons, searchLoC, searchNasa, searchCma, searchMet]) {
+    vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  }
+  vi.mocked(searchWellcome).mockResolvedValue({items:[{...image,id:'wellcome:1'}],cursor:'2'})
+  vi.mocked(searchVam).mockResolvedValue({items:[{...image,id:'vam:O1'}],cursor:'2'})
+  const page = await searchAllSources('flowers',null)
+  expect(page.items.map(item=>item.id)).toEqual(['wellcome:1','vam:O1'])
+  expect(JSON.parse(page.cursor!)).toMatchObject({wellcome:'2',vam:'2'})
+  expect(searchWellcome).toHaveBeenCalledWith('flowers',null,undefined)
+  expect(searchVam).toHaveBeenCalledWith('flowers',null,undefined)
 })

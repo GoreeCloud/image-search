@@ -99,7 +99,7 @@ export function ImageDetail({ image, isSaved, onClose, onNext, onPrevious, onTog
             </div>
             <div className="detail-metadata">
               <div><span>CREATOR</span><strong>{image.creator}</strong></div>
-              <div><span>RESOLUTION</span><strong>{image.width.toLocaleString()} × {image.height.toLocaleString()}</strong></div>
+              <div><span>RESOLUTION</span><strong>{image.dimensionsKnown === false ? 'Not provided by source' : `${image.width.toLocaleString()} × ${image.height.toLocaleString()}`}</strong></div>
               <div><span>LICENSE</span><strong>{image.license}</strong>{image.licenseUrl && <a className="license-link" href={image.licenseUrl} target="_blank" rel="noopener noreferrer">View license terms ↗</a>}</div>
             </div>
             <p className="detail-license">Check the original source for exact license, credit, and reuse requirements.</p>
