@@ -28,6 +28,8 @@ it('filters unrelated logos, fonts, and museum items for Samsung OneUI', () => {
     image('nature', 'Spring flowers', 'Collection photo'),
     image('update', 'One UI 7 screen', 'Samsung Galaxy Android update'),
     image('partial', 'Samsung Galaxy smartphone', 'Product photography'),
+    image('font', 'Samsung One UI Sans font specimen'),
+    image('logo', 'Samsung One UI logo icon'),
   ]
   expect(rankCollectionImages('Samsung OneUI', source).map(item => item.id)).toEqual(['settings', 'update'])
   expect(rankCollectionImages('nature', source)).toEqual(source)
@@ -36,4 +38,15 @@ it('filters unrelated logos, fonts, and museum items for Samsung OneUI', () => {
 it('keeps stable order among equally relevant screenshots', () => {
   const source = [image('first', 'OneUI settings'), image('second', 'One UI home screen')]
   expect(rankCollectionImages('one ui', source).map(item => item.id)).toEqual(['first', 'second'])
+})
+
+it('prefers actual UI screenshots while preserving explicit font and icon queries', () => {
+  const images = [
+    image('font', 'Samsung One UI Sans'),
+    image('setup', 'Samsung One UI setup screen'),
+    image('logo', 'Samsung One UI emblem'),
+    image('settings', 'One UI quick settings', 'Samsung Galaxy phone'),
+  ]
+  expect(rankCollectionImages('Samsung OneUI', images).map(item => item.id)).toEqual(['setup', 'settings'])
+  expect(rankCollectionImages('Samsung One UI font', images).map(item => item.id)).toContain('font')
 })
