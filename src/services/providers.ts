@@ -18,11 +18,30 @@ type MultiCursor = Partial<Record<SingleSource, string | null>>
 
 export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
   const seen = new Set<string>()
+  const originalUrlProviders = new Map<string, Set<string>>()
   return results.filter(image => {
     if (seen.has(image.id)) return false
+    // Different collections can assign distinct IDs to the same original.
+    // Do not conflate distinct images that share only a thumbnail or record URL.
+    const providers = originalUrlProviders.get(image.url)
+    if (providers && [...providers].some(provider => provider !== image.provider)) return false
     seen.add(image.id)
+    if (providers) providers.add(image.provider)
+    else originalUrlProviders.set(image.url, new Set([image.provider]))
     return true
   })
+}
+
+/** Fairly weave each available provider page without changing the provider's own ranking. */
+export function interleaveImagePages(pages: readonly (readonly ImageResult[])[]): ImageResult[] {
+  const images: ImageResult[] = []
+  const longest = Math.max(0, ...pages.map(page => page.length))
+  for (let index = 0; index < longest; index++) {
+    for (const page of pages) {
+      if (index < page.length) images.push(page[index])
+    }
+  }
+  return images
 }
 
 export async function searchAllSources(query: string, cursor: string | null, signal?: AbortSignal): Promise<SearchPage> {
@@ -64,7 +83,7 @@ export async function searchAllSources(query: string, cursor: string | null, sig
     r.status === 'rejected' ? [active[index]] : [])
   responses.forEach((r, index) => { if (r.status === 'rejected') next[active[index]] = cursors[active[index]] })
   return {
-    items: uniqueImages(rankCollectionImages(query, succeeded.flatMap(r => r.value.page.items))),
+    items: uniqueImages(rankCollectionImages(query, interleaveImagePages(succeeded.map(r => r.value.page.items)))),
     cursor: Object.values(next).some(value => typeof value === 'string') ? JSON.stringify(next) : null,
     unavailableSources,
   }
