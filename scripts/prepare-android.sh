@@ -18,3 +18,8 @@ printf 'Applied native Android system-bar insets to %s\n' "${activities[0]}"
 test -f src-tauri/android/ImageDownloadPlugin.kt
 cp src-tauri/android/ImageDownloadPlugin.kt "$(dirname "${activities[0]}")/ImageDownloadPlugin.kt"
 printf 'Applied native Android Downloads plugin\n'
+
+# System-bar appearance is a separate native plugin with the same stable namespace.
+test -f src-tauri/android/ThemeBarsPlugin.kt
+cp src-tauri/android/ThemeBarsPlugin.kt "$(dirname "${activities[0]}")/ThemeBarsPlugin.kt"
+printf 'Applied native Android theme-aware system bars plugin\n'
