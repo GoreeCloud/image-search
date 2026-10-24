@@ -98,6 +98,8 @@ jobs:
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
           RUSTFLAGS: '-C link-arg=-Wl,-z,max-page-size=16384'
+      - name: Test native public-only DNS policy
+        run: src-tauri/gen/android/gradlew -p src-tauri/gen/android :app:testArmDebugUnitTest --no-daemon
       - name: Verify Android APK identity and signer
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)

@@ -11,11 +11,15 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
-import java.net.HttpURLConnection
+import java.net.Proxy
 import java.net.URI
 import java.net.URL
 import java.text.Normalizer
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 @InvokeArg
 class ImageSaveArgs {
@@ -44,6 +48,19 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             "image/heif" to "heif"
         )
     }
+
+    // Direct connections only: proxies could bypass the vetted DNS destination.
+    // OkHttp connects to the exact InetAddress values returned by PublicImageDns
+    // while retaining normal HTTPS certificate verification for the URL hostname.
+    private val imageClient = OkHttpClient.Builder()
+        .dns(PublicImageDns())
+        .proxy(Proxy.NO_PROXY)
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .retryOnConnectionFailure(false)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .build()
 
     @Command
     fun saveImage(invoke: Invoke) {
@@ -87,39 +104,41 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
         return uri.toURL()
     }
 
-    private fun openImage(original: String): Pair<HttpURLConnection, String> {
+    private fun openImage(original: String): Pair<Response, String> {
         var current = validateUrl(original)
         repeat(5) {
-            val connection = (current.openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15000
-                readTimeout = 25000
-                instanceFollowRedirects = false
-                setRequestProperty("Accept", "image/avif,image/webp,image/*")
-            }
+            // The HTTP client uses only DNS answers approved in PublicImageDns.
+            // Every manually followed redirect is revalidated as a new request.
+            val request = Request.Builder()
+                .url(current.toString())
+                .header("Accept", "image/avif,image/webp,image/*")
+                .get()
+                .build()
+            val response = imageClient.newCall(request).execute()
             try {
-                val status = connection.responseCode
+                val status = response.code
                 if (status in 300..399) {
-                    val redirect = connection.getHeaderField("Location")
+                    val redirect = response.header("Location")
                         ?: throw IllegalStateException("The image provider sent an invalid redirect.")
                     val next = URL(current, redirect).toString()
                     current = validateUrl(next)
-                    connection.disconnect()
+                    response.close()
                     return@repeat
                 }
                 if (status !in 200..299) {
                     throw IllegalStateException("Image provider returned HTTP $status. Open the original source instead.")
                 }
-                val mime = connection.contentType?.substringBefore(";")?.trim()?.lowercase(Locale.ROOT)
+                val mime = response.header("Content-Type")?.substringBefore(";")?.trim()?.lowercase(Locale.ROOT)
                     ?: ""
-                if (!formats.containsKey(mime)) {
+                if (!formats.containsKey(mime) || response.body == null) {
                     throw IllegalStateException("The image provider did not return a supported image file.")
                 }
-                if (connection.contentLengthLong > MAX_BYTES) {
+                if (response.body!!.contentLength() > MAX_BYTES) {
                     throw IllegalStateException("The image is larger than the 40 MB limit.")
                 }
-                return Pair(connection, mime)
+                return Pair(response, mime)
             } catch (error: Exception) {
-                connection.disconnect()
+                response.close()
                 throw error
             }
         }
@@ -158,7 +177,8 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             savedUri = uri
             var written = 0L
             resolver.openOutputStream(uri, "w")?.use { output ->
-                connection.inputStream.use { input ->
+                (connection.body?.byteStream()
+                    ?: throw IllegalStateException("Image provider returned an empty response.")).use { input ->
                     val buffer = ByteArray(64 * 1024)
                     while (true) {
                         val n = input.read(buffer)
@@ -182,7 +202,7 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
                 if (cursor.moveToFirst()) cursor.getString(0) else filename
             } ?: filename
         } finally {
-            connection.disconnect()
+            connection.close()
             if (!completed && savedUri != null) resolver.delete(savedUri, null, null)
         }
     }
