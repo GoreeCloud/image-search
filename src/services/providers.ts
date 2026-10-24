@@ -16,11 +16,34 @@ export type SingleSource = keyof typeof SOURCE_SEARCH
 export type ImageSource = SingleSource | 'all'
 type MultiCursor = Partial<Record<SingleSource, string | null>>
 
+function imageIdentityUrl(value: string): string | null {
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    url.hash = ''
+    // Marketing parameters should not make one underlying image look unique.
+    // Retain all other query parameters: they may identify distinct media.
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^utm_/i.test(key) || /^(fbclid|gclid|msclkid)$/i.test(key)) url.searchParams.delete(key)
+    }
+    url.searchParams.sort()
+    return url.href
+  } catch {
+    return null
+  }
+}
+
 export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
-  const seen = new Set<string>()
+  const seenIds = new Set<string>()
+  const originals = new Map<string, string>()
   return results.filter(image => {
-    if (seen.has(image.id)) return false
-    seen.add(image.id)
+    if (seenIds.has(image.id)) return false
+    const original = imageIdentityUrl(image.url)
+    // A shared original across different providers represents the same asset.
+    // Source pages may be collections, so they alone cannot prove duplication.
+    if (original && originals.has(original) && originals.get(original) !== image.provider) return false
+    seenIds.add(image.id)
+    if (original && !originals.has(original)) originals.set(original, image.provider)
     return true
   })
 }

@@ -1,4 +1,4 @@
-/* Settings follows the existing GoreeCloud Glaze surface geometry. */
+/* Settings inherits the current GoreeCloud UI (GC UI) surface geometry. */
 .settings-page { max-width: 920px; margin: 0 auto; padding: 5px 0 60px; }
 .settings-heading { margin: 4px 0 32px; }
 .settings-heading h1 { margin: 15px 0 13px; }
@@ -35,7 +35,7 @@
   .mobile-nav button { width: 33.333%; }
 }
 
-/* Light palette overrides the dark-first Glaze presentation without changing image artwork. */
+/* Light palette supports the reference discovery interface without changing image artwork. */
 :root[data-theme="light"] { color-scheme: light; color: #232037; background: #faf9fc; --muted: #675f75; --edge: #ddd7e5; --lavender: #5c4c9c; }
 :root[data-theme="light"] .app-shell { color: #232037; background: radial-gradient(ellipse 45% 12% at 50% 1%, #eee8ff 0, transparent 90%), #faf9fc; }
 :root[data-theme="light"] .topbar { background: #ffffffee; border-color: #e6e0ed; }

@@ -5,7 +5,9 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 ## Available capabilities
 
 - Search **eight keyless image collections** by default: Openverse, Wikimedia Commons, NASA Image and Video Library, historical Library of Congress photographs, Cleveland Museum of Art, Metropolitan Museum of Art, Wellcome Collection, and the Victoria and Albert Museum. Filter to any individual source from the Source menu. No provider API key is embedded or required.
-- Adaptive masonry grid, skeletons, bounded pagination, and retry states. **Show more images** is available beside the results count, even when an unavailable provider pauses automatic pagination; another control appears below the gallery.
+- The default Explore screen follows the owner-approved Android mockup v3: light indigo/lavender appearance, prominent search, category chips, image-source controls, masonry tiles with always-available mobile actions, and a floating Explore/Saved/Settings dock. Existing saved dark-mode preferences are retained.
+- The initial Explore feed mixes six real provider queries across landscapes, architecture, flowers, space, coasts and interiors; it is not a static set of mock images. Results carry their original source links and usage rights. Providers may return different images or temporarily fail.
+- Adaptive masonry grid, skeletons, bounded pagination, and retry states. **Show more images** is available beside the results count on larger layouts, even when an unavailable provider pauses automatic pagination; another control appears below the gallery.
 - Search suggestions, source links, orientation filters and full-screen image details.
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
@@ -85,9 +87,10 @@ Copyright (C) 2026 GoreeCloud. Original GoreeCloud Image Search source code is l
 
 ### Appearance and optional provider API keys
 
-On mobile, **Settings** sits beside Explore and Saved in the bottom dock; on
+On mobile, **Settings** sits beside Explore and Saved in the floating bottom dock; on
 desktop it is in the main navigation. Settings > **Appearance** lets you choose
-Dark or Light Mode. Only the theme preference is stored locally.
+Dark or Light Mode. Light is the first-run default matching mockup v3; an existing
+user's explicit theme preference is respected. Only the theme preference is stored locally.
 
 **Settings > API** supports optional Europeana cultural heritage imagery with a user-provided
 Europeana API key. Europeana needs its own API authorization and is not queried
