@@ -42,8 +42,13 @@ function getDownloadUrl(original: string): string {
   let parsed: URL
   try { parsed = new URL(original) } catch { throw new ImageDownloadError('This image has no valid original download link.') }
   const host = parsed.hostname.toLowerCase()
+  // Reject ambiguous local DNS spellings before passing the URL to the
+  // Android bridge. Native code must validate redirects independently too.
+  const localName = /(?:^|\.)(?:localhost|local|localdomain|internal|lan)$/.test(host)
+    || host === 'home.arpa' || host.endsWith('.home.arpa')
   if (parsed.protocol !== 'https:' || parsed.username || parsed.password
-    || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')
+    || (parsed.port !== '' && parsed.port !== '443')
+    || host.endsWith('.') || !host.includes('.') || localName
     || /^\d+\.\d+\.\d+\.\d+$/.test(host) || host.startsWith('[')
     || /^(127\.|10\.|192\.168\.|169\.254\.|0\.|::1$)/.test(host)
     || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {

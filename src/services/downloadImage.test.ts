@@ -73,6 +73,24 @@ describe('original image downloads', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
+  it('rejects ambiguous local DNS hosts before invoking native Android downloads', async () => {
+    vi.mocked(invoke).mockClear()
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.stubGlobal('navigator', { userAgent: 'Android' })
+    for (const url of [
+      'https://localhost./image.jpg',
+      'https://printer.localdomain/photo.png',
+      'https://metadata.google.internal/image.jpg',
+      'https://router.lan/image.jpg',
+      'https://device.home.arpa/image.jpg',
+      'https://intranet/image.jpg',
+      'https://example.org:8443/image.jpg',
+    ]) {
+      await expect(downloadOriginalImage({ ...image, url })).rejects.toThrow('secure public download link')
+    }
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
   it('rejects HTML disguised as an image', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response('<html></html>', { headers: { 'Content-Type': 'text/html' } }))
     await expect(downloadOriginalImage(image)).rejects.toThrow('supported image file')
