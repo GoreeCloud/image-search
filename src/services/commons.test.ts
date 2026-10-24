@@ -53,6 +53,16 @@ describe('image source safety', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }))
     await expect(searchCommons('cats', null)).rejects.toThrow('busy')
   })
+
+  it('keeps valid Commons pages when other page objects are malformed', async () => {
+    const good = { pageid: 15, title: 'File:Sea.jpg', imageinfo: [{ url: 'https://upload.wikimedia.org/sea.jpg' }] }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ query: { pages: [null, { ...good, imageinfo: [null] }, good] } }),
+    }))
+    const response = await searchCommons('sea', null)
+    expect(response.items.map(item => item.id)).toEqual(['commons:15'])
+  })
 })
 
 it('supports offset pagination returned by the live Commons search API', async () => {

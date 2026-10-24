@@ -109,19 +109,22 @@
   .search-icon { width: 19px; height: 19px; margin-left: 17px; }
   .search-form input { padding-left: 12px; padding-right: 6px; font-size: 14px; letter-spacing: -.15px; }
   .search-submit { width: 44px; height: 44px; flex-basis: 44px; margin: 0 6px; display: none; }
-  .filter-trigger { position: absolute; right: 3px; top: 3px; width: 38px; height: 38px; border-radius: 16px; }
+  .filter-trigger { position: absolute; right: 3px; top: 3px; width: 38px; height: 38px; border-radius: 16px; overflow: visible; }
+  /* Preserve the approved 38px visual, but offer a full 44px touch hit area. */
+  .filter-trigger::after { content: ''; position: absolute; inset: -3px; }
   .filter-trigger svg { width: 21px; height: 21px; }
-  .search-form { padding-right: 42px; }
+  .search-form { padding-right: 44px; }
   .hero-filter-panel { padding: 13px; }
   .hero-filter-panel span { display: none; }
   .topics { margin-top: 6px; gap: 6px; padding: 1px 0 5px; }
   .topic { min-width: 0; padding: 7px 11px; font-size: 12px; line-height: 1.25; white-space: nowrap; }
-  .results-toolbar { margin: 11px 6px 7px; display: flex; align-items: center; flex-direction: row; gap: 5px; }
-  .results-title { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; min-width: 0; }
-  .results-title h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.6px; white-space: nowrap; }
+  /* Long result headings and localized source names must never share the same pixels. */
+  .results-toolbar { margin: 11px 6px 7px; display: flex; align-items: center; flex-direction: row; flex-wrap: wrap; gap: 5px; }
+  .results-title { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; }
+  .results-title h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.6px; white-space: normal; overflow-wrap: anywhere; }
   .results-title > span { display: none; }
   .quick-more { display: none; }
-  .toolbar-filters { margin-left: auto; }
+  .toolbar-filters { margin-left: auto; flex: 0 0 auto; }
   .filter-wrap.source-filter { gap: 2px; padding: 0; }
   .source-filter select { max-width: 150px; font-size: 12px; line-height: 1.2; padding: 9px 0; }
   .source-filter svg { width: 17px; }
@@ -129,8 +132,11 @@
   .tile { margin-bottom: 8px; border-radius: 13px; }
   .tile-image { border-radius: 13px; }
   .tile-source { top: 7px; left: 7px; padding: 5px 7px; max-width: calc(100% - 14px); font-size: 10.5px; }
-  .tile-actions { right: 7px; bottom: 7px; gap: 5px; }
-  .tile-actions button { width: 38px; height: 38px; border-radius: 12px; }
+  /* The 6px gap prevents adjacent expanded targets from overlapping. At a
+     320px viewport the three 44px hit areas still fit inside each 140px tile. */
+  .tile-actions { right: 7px; bottom: 7px; gap: 6px; }
+  .tile-actions button { position: relative; width: 38px; height: 38px; border-radius: 12px; overflow: visible; }
+  .tile-actions button::after { content: ''; position: absolute; inset: -3px; }
   .tile-actions button svg { width: 17px; height: 17px; }
   .tile-actions .tile-rights { font-size: 19px; }
   .tile-shade { display: block; }
@@ -155,4 +161,15 @@
   .headline-row h1 { font-size: 21px; white-space: normal; }
   .topic { padding: 10px 14px; }
   .source-filter select { max-width: 128px; }
+}
+
+/* At tablet and small-desktop widths, keep results metadata and provider controls
+   readable instead of squeezing all four toolbar elements into one row. */
+@media (min-width: 681px) and (max-width: 1050px) {
+  .results-toolbar { flex-wrap: wrap; align-items: flex-start; row-gap: 12px; }
+  .results-title { flex: 1 1 550px; min-width: 0; flex-wrap: wrap; align-items: center; row-gap: 8px; }
+  .results-title h2 { line-height: 1.2; overflow-wrap: anywhere; }
+  .results-title > span { white-space: nowrap; }
+  .quick-more { margin-left: auto; }
+  .toolbar-filters { margin-left: auto; }
 }

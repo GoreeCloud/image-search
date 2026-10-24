@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.os.Build
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -11,11 +12,16 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
-import java.net.HttpURLConnection
+import java.io.InterruptedIOException
+import java.net.Proxy
 import java.net.URI
 import java.net.URL
 import java.text.Normalizer
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 @InvokeArg
 class ImageSaveArgs {
@@ -32,6 +38,7 @@ class ImageSaveArgs {
 class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
     companion object {
         private const val MAX_BYTES = 40L * 1024 * 1024
+        private val downloadGate = NativeDownloadGate(2)
         private val formats = mapOf(
             "image/jpeg" to "jpg",
             "image/png" to "png",
@@ -45,6 +52,19 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
         )
     }
 
+    // Direct connections only: proxies could bypass the vetted DNS destination.
+    // OkHttp connects to the exact InetAddress values returned by PublicImageDns
+    // while retaining normal HTTPS certificate verification for the URL hostname.
+    private val imageClient = OkHttpClient.Builder()
+        .dns(PublicImageDns())
+        .proxy(Proxy.NO_PROXY)
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .retryOnConnectionFailure(false)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .build()
+
     @Command
     fun saveImage(invoke: Invoke) {
         val args = try {
@@ -53,16 +73,29 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.reject("The image download request was invalid.")
             return
         }
-        Thread({
-            try {
-                val name = saveToDownloads(args.url, args.title)
-                val result = JSObject()
-                result.put("filename", name)
-                invoke.resolve(result)
-            } catch (error: Exception) {
-                invoke.reject(error.message ?: "Could not save this image to Downloads.")
-            }
-        }, "goreecloud-image-download").start()
+        // A fast sequence of save taps must not allocate unlimited threads,
+        // simultaneous streams or pending MediaStore entries.
+        if (!downloadGate.tryAcquire()) {
+            invoke.reject("Two image downloads are already running. Please try again shortly.")
+            return
+        }
+        try {
+            Thread({
+                try {
+                    val name = saveToDownloads(args.url, args.title)
+                    val result = JSObject()
+                    result.put("filename", name)
+                    invoke.resolve(result)
+                } catch (error: Exception) {
+                    invoke.reject(error.message ?: "Could not save this image to Downloads.")
+                } finally {
+                    downloadGate.release()
+                }
+            }, "goreecloud-image-download").start()
+        } catch (_: Exception) {
+            downloadGate.release()
+            invoke.reject("Android could not start the image download.")
+        }
     }
 
     private fun validateUrl(address: String): URL {
@@ -70,50 +103,64 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             throw IllegalArgumentException("The image URL is invalid.")
         }
         val host = uri.host?.lowercase(Locale.ROOT) ?: ""
-        val unsafe = host.isEmpty() || host == "localhost" || host.endsWith(".localhost") ||
-            host.endsWith(".local") || host.startsWith("127.") || host.startsWith("10.") ||
+        // Validate again on every redirect; the WebView-side URL check is
+        // not a trust boundary for a native network request.
+        val localName = listOf(".localhost", ".local", ".localdomain", ".internal", ".lan")
+            .any { host.endsWith(it) } || host == "home.arpa" || host.endsWith(".home.arpa")
+        val unsafe = host.isEmpty() || host.endsWith(".") || !host.contains(".") ||
+            host == "localhost" || localName ||
+            host.startsWith("127.") || host.startsWith("10.") ||
             host.startsWith("192.168.") || host.startsWith("169.254.") ||
-            host.startsWith("172.") && host.split(".").getOrNull(1)?.toIntOrNull()?.let { it in 16..31 } == true ||
+            (host.startsWith("172.") && host.split(".").getOrNull(1)?.toIntOrNull()?.let { it in 16..31 } == true) ||
             host.all { it.isDigit() || it == '.' } || host.contains(":")
-        if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.userInfo != null || unsafe) {
+        if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.userInfo != null ||
+            (uri.port != -1 && uri.port != 443) || unsafe) {
             throw IllegalArgumentException("Only public HTTPS image addresses can be downloaded.")
         }
         return uri.toURL()
     }
 
-    private fun openImage(original: String): Pair<HttpURLConnection, String> {
+    private fun openImage(original: String, deadline: ImageDownloadDeadline): Pair<Response, String> {
         var current = validateUrl(original)
         repeat(5) {
-            val connection = (current.openConnection() as HttpURLConnection).apply {
-                connectTimeout = 15000
-                readTimeout = 25000
-                instanceFollowRedirects = false
-                setRequestProperty("Accept", "image/avif,image/webp,image/*")
-            }
+            // The HTTP client uses only DNS answers approved in PublicImageDns.
+            // Every manually followed redirect is revalidated as a new request.
+            val request = Request.Builder()
+                .url(current.toString())
+                .header("Accept", "image/avif,image/webp,image/*")
+                .get()
+                .build()
+            // OkHttp's Call.timeout covers DNS, TLS, and streamed body reads.
+            // Budget remaining time per hop so manual redirects cannot reset it.
+            val remaining = deadline.remainingMillis(SystemClock.elapsedRealtime())
+            if (remaining == 0L) throw InterruptedIOException("Image download timed out.")
+            val call = imageClient.newCall(request)
+            call.timeout().timeout(remaining, TimeUnit.MILLISECONDS)
+            val response = call.execute()
             try {
-                val status = connection.responseCode
+                val status = response.code
                 if (status in 300..399) {
-                    val redirect = connection.getHeaderField("Location")
+                    val redirect = response.header("Location")
                         ?: throw IllegalStateException("The image provider sent an invalid redirect.")
                     val next = URL(current, redirect).toString()
                     current = validateUrl(next)
-                    connection.disconnect()
+                    response.close()
                     return@repeat
                 }
                 if (status !in 200..299) {
                     throw IllegalStateException("Image provider returned HTTP $status. Open the original source instead.")
                 }
-                val mime = connection.contentType?.substringBefore(";")?.trim()?.lowercase(Locale.ROOT)
+                val mime = response.header("Content-Type")?.substringBefore(";")?.trim()?.lowercase(Locale.ROOT)
                     ?: ""
-                if (!formats.containsKey(mime)) {
+                if (!formats.containsKey(mime) || response.body == null) {
                     throw IllegalStateException("The image provider did not return a supported image file.")
                 }
-                if (connection.contentLengthLong > MAX_BYTES) {
+                if (response.body!!.contentLength() > MAX_BYTES) {
                     throw IllegalStateException("The image is larger than the 40 MB limit.")
                 }
-                return Pair(connection, mime)
+                return Pair(response, mime)
             } catch (error: Exception) {
-                connection.disconnect()
+                response.close()
                 throw error
             }
         }
@@ -135,7 +182,8 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             throw IllegalStateException("Saving to Downloads requires Android 10 or newer.")
         }
-        val (connection, mime) = openImage(original)
+        val deadline = ImageDownloadDeadline(SystemClock.elapsedRealtime())
+        val (connection, mime) = openImage(original, deadline)
         val filename = safeFilename(title, mime)
         val resolver = activity.contentResolver
         val values = ContentValues().apply {
@@ -152,7 +200,8 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             savedUri = uri
             var written = 0L
             resolver.openOutputStream(uri, "w")?.use { output ->
-                connection.inputStream.use { input ->
+                (connection.body?.byteStream()
+                    ?: throw IllegalStateException("Image provider returned an empty response.")).use { input ->
                     val buffer = ByteArray(64 * 1024)
                     while (true) {
                         val n = input.read(buffer)
@@ -176,8 +225,13 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
                 if (cursor.moveToFirst()) cursor.getString(0) else filename
             } ?: filename
         } finally {
-            connection.disconnect()
-            if (!completed && savedUri != null) resolver.delete(savedUri, null, null)
+            finalizeImageDownload(
+                completed,
+                closeResponse = { connection.close() },
+                rollbackPending = {
+                    if (savedUri != null) resolver.delete(savedUri, null, null)
+                }
+            )
         }
     }
 }

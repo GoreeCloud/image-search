@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { requireResponseObject } from './providerResponse'
 
 const BASE = 'https://collectionapi.metmuseum.org/public/collection'
 type SearchPayload = { total?: number; objectIDs?: number[] | null }
@@ -52,7 +53,10 @@ export async function searchMet(query: string, cursor: string | null, signal?: A
   const params = new URLSearchParams({ q, hasImages: 'true', limit: '12', offset: String(offset) })
   const response = await fetchWithTimeout(`${BASE}/v1.1/search?${params}`, signal)
   if (!response.ok) throw new Error(`Met search temporarily unavailable (HTTP ${response.status}).`)
-  const payload = await response.json() as SearchPayload
+  const payload = requireResponseObject<SearchPayload>(await response.json(), 'Met')
+  if (payload.objectIDs !== undefined && payload.objectIDs !== null && !Array.isArray(payload.objectIDs)) {
+    throw new Error('Invalid Met results')
+  }
   const ids = (payload.objectIDs || []).filter(id => Number.isSafeInteger(id) && id > 0).slice(0, 12)
   // Bounded batches avoid bursts against the free museum API.
   const results: ImageResult[] = []

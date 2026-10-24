@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 type NasaItem = {
   data?: Array<{ nasa_id?: string; title?: string; description?: string; photographer?: string; secondary_creator?: string; media_type?: string }>
@@ -53,8 +54,10 @@ export async function searchNasa(query: string, cursor: string | null, signal?: 
   const params = new URLSearchParams({ q, media_type: 'image', page_size: '30', page: String(page) })
   const res = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!res.ok) throw new Error(`NASA search unavailable (HTTP ${res.status}).`)
-  const data = await res.json() as NasaResponse
-  const items = (data.collection?.items || []).map(normalizeNasa).filter((x): x is ImageResult => x !== null)
-  const hasNext = (data.collection?.links || []).some(l => l.rel === 'next')
+  const data = requireResponseObject<NasaResponse>(await res.json(), 'NASA')
+  const items = normalizeProviderRecords(data.collection?.items, 'NASA', normalizeNasa)
+  const links = data.collection?.links ?? []
+  if (!Array.isArray(links)) throw new Error('Invalid NASA pagination')
+  const hasNext = links.some(l => l?.rel === 'next')
   return { items, cursor: hasNext && page < 100 ? String(page + 1) : null }
 }

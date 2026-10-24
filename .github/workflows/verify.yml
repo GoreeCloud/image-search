@@ -13,8 +13,8 @@ jobs:
     name: Web build and tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -23,17 +23,21 @@ jobs:
         run: npm audit --audit-level=moderate
       - run: npm run typecheck
       - run: npm test
+      - name: Test manual provider CORS probe without network access
+        run: npm run test:provider-cors
+      - name: Check mobile touch target CSS geometry
+        run: npm run test:mobile-touch
       - run: npm run build
 
   linux:
     name: Linux desktop bundle
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -52,7 +56,7 @@ jobs:
           dpkg-deb --field "$DEB" Package Architecture Version
           dpkg-deb --contents "$DEB" | grep -F 'usr/bin/image-search'
           file "$APPIMAGE"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: image-search-linux
           path: |
@@ -65,12 +69,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -94,6 +98,8 @@ jobs:
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
           RUSTFLAGS: '-C link-arg=-Wl,-z,max-page-size=16384'
+      - name: Test native public-only DNS policy
+        run: src-tauri/gen/android/gradlew -p src-tauri/gen/android :app:testArmDebugUnitTest --no-daemon
       - name: Verify Android APK identity and signer
         run: |
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
@@ -106,7 +112,7 @@ jobs:
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -print -quit)
           test -n "$APK" && test -s "$APK"
           PATH="${ANDROID_HOME}/build-tools/35.0.0:$PATH" bash scripts/verify-android-16k.sh "$APK"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: image-search-android-debug
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk

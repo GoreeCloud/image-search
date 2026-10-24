@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://api.vam.ac.uk/v2/objects/search'
 const PAGE_SIZE = 20
@@ -51,12 +52,11 @@ export async function searchVam(query: string, cursor: string | null, signal?: A
   const params = new URLSearchParams({ q, page_size: String(PAGE_SIZE), images_exist: 'true', page: String(page) })
   const response = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!response.ok) throw new Error(`Victoria and Albert Museum unavailable (HTTP ${response.status}).`)
-  const payload = await response.json() as VamResponse | null
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.records)) {
+  const payload = requireResponseObject<VamResponse>(await response.json(), 'Victoria and Albert Museum')
+  if (!Array.isArray(payload.records)) {
     throw new Error('Invalid Victoria and Albert Museum response')
   }
-  const items = payload.records.slice(0, PAGE_SIZE)
-    .map(normalizeVam).filter((item): item is ImageResult => item !== null)
+  const items = normalizeProviderRecords(payload.records.slice(0, PAGE_SIZE), 'Victoria and Albert Museum', normalizeVam)
   const totalPages = Number(payload.info?.pages)
   const more = Number.isSafeInteger(totalPages) && totalPages > page
   return { items, cursor: more && page < MAX_PAGE ? String(page + 1) : null }

@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://api.openverse.org/v1/images/'
 type OpenverseImage = {
@@ -78,7 +79,7 @@ export async function searchOpenverse(
     if (response.status === 429) throw new Error('Openverse request limit reached. Try Commons or come back later.')
     throw new Error(`Openverse is unavailable (HTTP ${response.status}).`)
   }
-  const data = await response.json() as OpenverseResponse
-  const items = (data.results || []).map(normalizeOpenverse).filter((x): x is ImageResult => x !== null)
+  const data = requireResponseObject<OpenverseResponse>(await response.json(), 'Openverse')
+  const items = normalizeProviderRecords(data.results, 'Openverse', normalizeOpenverse)
   return { items, cursor: page < Math.min(data.page_count || 1, 100) ? String(page + 1) : null }
 }

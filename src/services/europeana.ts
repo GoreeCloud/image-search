@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 import { getEuropeanaKey } from './apiKeys'
 
 type EuropeanaRecord = {
@@ -72,9 +73,9 @@ export async function searchEuropeana(query: string, cursor: string | null, sign
   const params = new URLSearchParams({ query: q, rows: '24', start: String(start), reusability: 'open', thumbnail: 'true', qf: 'TYPE:IMAGE' })
   const response = await fetchWithTimeout(`https://api.europeana.eu/record/v2/search.json?${params}`, signal, 16000, { 'X-Api-Key': key })
   if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? 'Europeana API key was rejected or lacks access.' : `Europeana search unavailable (HTTP ${response.status}).`)
-  const result = await response.json() as Results
+  const result = requireResponseObject<Results>(await response.json(), 'Europeana')
   return {
-    items: (result.items || []).map(normalizeEuropeana).filter((item): item is ImageResult => item !== null),
+    items: normalizeProviderRecords(result.items, 'Europeana', normalizeEuropeana),
     cursor: start + 24 <= Math.min(2401,Math.max(0,result.totalResults || 0)) ? String(start + 24) : null,
   }
 }

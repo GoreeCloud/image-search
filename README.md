@@ -12,9 +12,11 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
 - Dark/light appearance, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts. Full GoreeCloud UI (GC UI) integration remains unverified.
+- On narrow mobile layouts, the filter trigger and the three image-action buttons retain the approved 38px visual size while exposing nonoverlapping 44px CSS touch targets. A source-level layout contract checks the 320px two-column constraint; physical-device hit testing and approved-mockup review remain pending.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
+- Provider response validation rejects invalid JSON envelopes, skips isolated malformed image records without discarding valid neighboring results, and bounds per-page normalization work. This is defensive parsing, not a guarantee that external image hosts remain available.
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
@@ -31,8 +33,31 @@ npm ci
 npm run dev           # http://localhost:1420
 npm run typecheck
 npm test
+npm run test:provider-cors
+npm run test:mobile-touch
 npm run build
 ```
+
+### Diagnose browser provider access
+
+For a **manual, read-only check** of the eight keyless providers' CORS response
+headers, from an approved network and with no user search terms or API keys:
+
+```bash
+npm run probe:provider-cors
+# Check another approved HTTPS app origin when its name is known:
+npm run probe:provider-cors -- --origin=https://YOUR-APP-ORIGIN.example
+```
+
+This sends one small, synthetic HTTPS GET per official provider, at most three
+concurrently, with a 12-second per-request timeout. It reads only response
+headers and reports `allowed`, `blocked`, `http-error`, `timeout`, or
+`network-error`. A nonzero exit indicates a provider needs review. The check
+does **not** bypass CORS, contact unapproved hosts, cache images, prove image
+loadability, or replace real-browser/Android/WebView acceptance. A successful
+HTTP 200 with no `Access-Control-Allow-Origin` is **blocked**, not usable by
+browser JavaScript. Europeana is excluded because it requires an optional
+user-provided API key; the probe never handles such credentials.
 
 ### Install the web app
 
@@ -68,10 +93,13 @@ No API keys are embedded in client code. Future commercial search providers shou
 
 - `src/services/openverse.ts`, `commons.ts`, `nasa.ts`, `loc.ts`, `cleveland.ts`, `met.ts`, `wellcome.ts`, `vam.ts`: source-specific API adapters, response normalization, URL trust boundaries and pagination.
 - `src/services/providers.ts`: parallel federated search with partial-failure tolerance and stable result deduplication.
+- `src/services/providerResponse.ts`: shared untrusted-JSON boundary for source adapters, including per-record isolation and finite image dimensions.
 - `src/services/imageFallback.ts`: same-provider trusted preview recovery.
 - `src-tauri/android/MainActivity.kt`: Android native safe-area application; `scripts/prepare-android.sh` installs it into generated Gradle sources.
 - `src/hooks`: image search request lifecycle and local saved state, with separate first-page and load-more error handling.
 - `src/services/network.ts`: cancellable HTTP timeout helper shared by image providers.
+- `scripts/provider-cors.mjs` and `scripts/check-provider-cors.mjs`: bounded, manual
+  cross-origin API header qualification; its pure policy checks run in CI.
 - `src/components`: masonry tiles and lightbox.
 - `src/styles.css`: shared responsive, reduced-motion-aware styling.
 - `src-tauri`: minimal Rust shell with a restrictive content security policy.

@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://openaccess-api.clevelandart.org/api/artworks/'
 
@@ -74,8 +75,8 @@ export async function searchCma(query: string, cursor: string | null, signal?: A
   const params = new URLSearchParams({ q, cc0: '1', has_image: '1', limit: '24', skip: String(skip) })
   const response = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!response.ok) throw new Error(`Cleveland Museum image search unavailable (HTTP ${response.status}).`)
-  const data = await response.json() as CmaResponse
-  const items = (data.data || []).map(normalizeCma).filter((item): item is ImageResult => item !== null)
+  const data = requireResponseObject<CmaResponse>(await response.json(), 'Cleveland Museum')
+  const items = normalizeProviderRecords(data.data, 'Cleveland Museum', normalizeCma)
   const total = Math.max(0, data.info?.total || 0)
   return { items, cursor: skip + 24 < Math.min(total, 984) ? String(skip + 24) : null }
 }

@@ -59,7 +59,7 @@ describe('original image downloads', () => {
     })
     expect(await downloadOriginalImage(image)).toBe('Seaside Sunset.jpg')
     expect(fetch).toHaveBeenCalledWith(image.url, expect.objectContaining({
-      credentials: 'omit', mode: 'cors', referrerPolicy: 'no-referrer',
+      credentials: 'omit', mode: 'cors', redirect: 'error', referrerPolicy: 'no-referrer',
     }))
     expect(clickedHref).toBe('blob:https://app.example/image-123')
     expect(clickedName).toBe('Seaside Sunset.jpg')
@@ -71,6 +71,24 @@ describe('original image downloads', () => {
     await expect(downloadOriginalImage({ ...image, url: 'https://[::1]/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
     await expect(downloadOriginalImage({ ...image, url: 'https://8.8.8.8/a.jpg' })).rejects.toBeInstanceOf(ImageDownloadError)
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('rejects ambiguous local DNS hosts before invoking native Android downloads', async () => {
+    vi.mocked(invoke).mockClear()
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.stubGlobal('navigator', { userAgent: 'Android' })
+    for (const url of [
+      'https://localhost./image.jpg',
+      'https://printer.localdomain/photo.png',
+      'https://metadata.google.internal/image.jpg',
+      'https://router.lan/image.jpg',
+      'https://device.home.arpa/image.jpg',
+      'https://intranet/image.jpg',
+      'https://example.org:8443/image.jpg',
+    ]) {
+      await expect(downloadOriginalImage({ ...image, url })).rejects.toThrow('secure public download link')
+    }
+    expect(invoke).not.toHaveBeenCalled()
   })
 
   it('rejects HTML disguised as an image', async () => {
