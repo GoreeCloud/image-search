@@ -66,7 +66,9 @@ export default function App() {
   const { images, loading, loadingMore, error, loadMoreError, unavailableSources, hasMore, loadMore } = useImageSearch(query, refresh, source)
   const collectionLimitedQuery = source === 'all' && isModernTechnologyQuery(query)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
-  const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
+  // Saved is a distinct collection. Explore's orientation filter is hidden here,
+  // so it must not silently exclude saved images from this view.
+  const visible = useMemo(() => view === 'saved' ? saved : images.filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
   const currentIndex = visible.findIndex((item) => item.id === detailId)
   const selected = currentIndex >= 0 ? visible[currentIndex] : null
 
