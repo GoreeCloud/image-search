@@ -21,6 +21,7 @@ cp src-tauri/android/PublicImageDns.kt "$(dirname "${activities[0]}")/PublicImag
 cp src-tauri/android/ImageDownloadDeadline.kt "$(dirname "${activities[0]}")/ImageDownloadDeadline.kt"
 cp src-tauri/android/NativeDownloadGate.kt "$(dirname "${activities[0]}")/NativeDownloadGate.kt"
 cp src-tauri/android/ImageDownloadCleanup.kt "$(dirname "${activities[0]}")/ImageDownloadCleanup.kt"
+cp src-tauri/android/TimedImageCall.kt "$(dirname "${activities[0]}")/TimedImageCall.kt"
 printf 'Applied native Downloads plugin, public DNS pinning, deadline, concurrency gate, and rollback\n'
 
 # Generated Android sources are intentionally not checked into Git. Add the
@@ -28,7 +29,7 @@ printf 'Applied native Downloads plugin, public DNS pinning, deadline, concurren
 gradle_file="src-tauri/gen/android/app/build.gradle.kts"
 test -f "$gradle_file"
 if ! grep -Fq 'com.squareup.okhttp3:okhttp:5.3.0' "$gradle_file"; then
-  printf '\n// GoreeCloud native image downloads: validated, pinned DNS destinations.\ndependencies {\n    implementation("com.squareup.okhttp3:okhttp:5.3.0")\n    testImplementation("junit:junit:4.13.2")\n}\n' >> "$gradle_file"
+  printf '\n// GoreeCloud native image downloads: validated, pinned DNS destinations.\ndependencies {\n    implementation("com.squareup.okhttp3:okhttp:5.3.0")\n    testImplementation("junit:junit:4.13.2")\n    testImplementation("com.squareup.okhttp3:mockwebserver3:5.3.0")\n}\n' >> "$gradle_file"
 fi
 test_root="src-tauri/gen/android/app/src/test/java/com/goreecloud/imagesearch"
 mkdir -p "$test_root"
@@ -36,7 +37,8 @@ cp src-tauri/android/PublicImageDnsTest.kt "$test_root/PublicImageDnsTest.kt"
 cp src-tauri/android/ImageDownloadDeadlineTest.kt "$test_root/ImageDownloadDeadlineTest.kt"
 cp src-tauri/android/NativeDownloadGateTest.kt "$test_root/NativeDownloadGateTest.kt"
 cp src-tauri/android/ImageDownloadCleanupTest.kt "$test_root/ImageDownloadCleanupTest.kt"
-printf 'Installed native DNS, deadline, concurrency, and rollback regression tests\n'
+cp src-tauri/android/TimedImageCallTest.kt "$test_root/TimedImageCallTest.kt"
+printf 'Installed native DNS, deadline, concurrency, rollback, and streamed-timeout tests\n'
 
 # System-bar appearance is a separate native plugin with the same stable namespace.
 test -f src-tauri/android/ThemeBarsPlugin.kt

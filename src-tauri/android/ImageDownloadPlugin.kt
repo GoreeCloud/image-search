@@ -12,7 +12,6 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
-import java.io.InterruptedIOException
 import java.net.Proxy
 import java.net.URI
 import java.net.URL
@@ -132,11 +131,9 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
                 .build()
             // OkHttp's Call.timeout covers DNS, TLS, and streamed body reads.
             // Budget remaining time per hop so manual redirects cannot reset it.
-            val remaining = deadline.remainingMillis(SystemClock.elapsedRealtime())
-            if (remaining == 0L) throw InterruptedIOException("Image download timed out.")
-            val call = imageClient.newCall(request)
-            call.timeout().timeout(remaining, TimeUnit.MILLISECONDS)
-            val response = call.execute()
+            val response = executeTimedImageCall(
+                imageClient, request, deadline, SystemClock.elapsedRealtime()
+            )
             try {
                 val status = response.code
                 if (status in 300..399) {
