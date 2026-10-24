@@ -225,8 +225,13 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
                 if (cursor.moveToFirst()) cursor.getString(0) else filename
             } ?: filename
         } finally {
-            connection.close()
-            if (!completed && savedUri != null) resolver.delete(savedUri, null, null)
+            finalizeImageDownload(
+                completed,
+                closeResponse = { connection.close() },
+                rollbackPending = {
+                    if (savedUri != null) resolver.delete(savedUri, null, null)
+                }
+            )
         }
     }
 }
