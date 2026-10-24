@@ -18,9 +18,16 @@ type MultiCursor = Partial<Record<SingleSource, string | null>>
 
 export function uniqueImages(results: readonly ImageResult[]): ImageResult[] {
   const seen = new Set<string>()
+  const originalUrlProviders = new Map<string, Set<string>>()
   return results.filter(image => {
     if (seen.has(image.id)) return false
+    // Different collections can assign distinct IDs to the same original.
+    // Do not conflate distinct images that share only a thumbnail or record URL.
+    const providers = originalUrlProviders.get(image.url)
+    if (providers && [...providers].some(provider => provider !== image.provider)) return false
     seen.add(image.id)
+    if (providers) providers.add(image.provider)
+    else originalUrlProviders.set(image.url, new Set([image.provider]))
     return true
   })
 }
