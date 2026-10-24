@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://api.wellcomecollection.org/catalogue/v2/images'
 const PAGE_SIZE = 20
@@ -83,12 +84,11 @@ export async function searchWellcome(query: string, cursor: string | null, signa
   const params = new URLSearchParams({ query: q, pageSize: String(PAGE_SIZE), page: String(page) })
   const response = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!response.ok) throw new Error(`Wellcome Collection unavailable (HTTP ${response.status}).`)
-  const payload = await response.json() as WellcomeResponse | null
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.results)) {
+  const payload = requireResponseObject<WellcomeResponse>(await response.json(), 'Wellcome Collection')
+  if (!Array.isArray(payload.results)) {
     throw new Error('Invalid Wellcome Collection response')
   }
-  const items = payload.results.slice(0, PAGE_SIZE)
-    .map(normalizeWellcome).filter((item): item is ImageResult => item !== null)
+  const items = normalizeProviderRecords(payload.results.slice(0, PAGE_SIZE), 'Wellcome Collection', normalizeWellcome)
   const totalPages = Number(payload.totalPages)
   const more = Number.isSafeInteger(totalPages) && totalPages > page
   return { items, cursor: more && page < MAX_PAGE ? String(page + 1) : null }

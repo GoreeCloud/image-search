@@ -13,3 +13,11 @@ it('paginates using API next links', async () => {
   expect(page.items).toHaveLength(1)
   expect(page.cursor).toBe('2')
 })
+it('isolates broken NASA records without hiding valid images', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ collection: { items: [null, { ...fixture, links: {} }, fixture], links: [] } }),
+  }))
+  const page = await searchNasa('earth', null)
+  expect(page.items.map(item => item.id)).toEqual(['nasa:PIA00342'])
+})

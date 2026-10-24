@@ -15,6 +15,7 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
+- Provider response validation rejects invalid JSON envelopes, skips isolated malformed image records without discarding valid neighboring results, and bounds per-page normalization work. This is defensive parsing, not a guarantee that external image hosts remain available.
 - Gallery previews retry using a trusted same-provider alternative where available. Failed previews offer a retry and link to the authoritative source instead of trapping the user on a dead image.
 - Branded source-based icon on the web, PWA, Linux and Android; Android 15+ native system-bar inset handling keeps the app from overlapping status and navigation bars.
 
@@ -68,6 +69,7 @@ No API keys are embedded in client code. Future commercial search providers shou
 
 - `src/services/openverse.ts`, `commons.ts`, `nasa.ts`, `loc.ts`, `cleveland.ts`, `met.ts`, `wellcome.ts`, `vam.ts`: source-specific API adapters, response normalization, URL trust boundaries and pagination.
 - `src/services/providers.ts`: parallel federated search with partial-failure tolerance and stable result deduplication.
+- `src/services/providerResponse.ts`: shared untrusted-JSON boundary for source adapters, including per-record isolation and finite image dimensions.
 - `src/services/imageFallback.ts`: same-provider trusted preview recovery.
 - `src-tauri/android/MainActivity.kt`: Android native safe-area application; `scripts/prepare-android.sh` installs it into generated Gradle sources.
 - `src/hooks`: image search request lifecycle and local saved state, with separate first-page and load-more error handling.

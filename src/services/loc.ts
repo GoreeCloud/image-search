@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://www.loc.gov/photos/'
 const IMAGE_HOSTS = new Set(['tile.loc.gov', 'cdn.loc.gov'])
@@ -75,7 +76,7 @@ export async function searchLoC(query: string, cursor: string | null, signal?: A
   const params = new URLSearchParams({ fo: 'json', q, c: '24', sp: String(page), at: 'results,pagination' })
   const response = await fetchWithTimeout(`${API}?${params}`, signal)
   if (!response.ok) throw new Error(`Library of Congress search unavailable (HTTP ${response.status}).`)
-  const payload = await response.json() as LoCResponse
-  const items = (payload.results || []).map(normalizeLoC).filter((r): r is ImageResult => r !== null)
+  const payload = requireResponseObject<LoCResponse>(await response.json(), 'Library of Congress')
+  const items = normalizeProviderRecords(payload.results, 'Library of Congress', normalizeLoC)
   return { items, cursor: payload.pagination?.next && page < 100 ? String(page + 1) : null }
 }

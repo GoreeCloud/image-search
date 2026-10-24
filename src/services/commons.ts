@@ -1,5 +1,6 @@
 import type { ImageResult, SearchPage } from '../types'
 import { fetchWithTimeout } from './network'
+import { normalizeProviderRecords, requireResponseObject } from './providerResponse'
 
 const API = 'https://commons.wikimedia.org/w/api.php'
 const TRUSTED_IMAGE_HOSTS = ['upload.wikimedia.org', 'thumb.wikimedia.org']
@@ -123,10 +124,11 @@ export async function searchCommons(
     if (response.status === 429) throw new Error('Image source is busy. Please try again shortly.')
     throw new Error(`Image search unavailable (HTTP ${response.status}).`)
   }
-  const json = await response.json() as CommonsResponse
+  const json = requireResponseObject<CommonsResponse>(await response.json(), 'Wikimedia Commons')
   if (json.error) throw new Error('Image source error. Try a different search.')
-  const pages = (json.query?.pages || []).slice().sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-  const items = pages.map(normalizePage).filter((item): item is ImageResult => item !== null)
+  const pages = json.query?.pages ?? []
+  if (!Array.isArray(pages)) throw new Error('Invalid Wikimedia Commons results')
+  const items = normalizeProviderRecords(pages.slice().sort((a, b) => (a?.index ?? 0) - (b?.index ?? 0)), 'Wikimedia Commons', normalizePage)
   const next = json.continue && (json.continue.gsrcontinue || json.continue.gsroffset !== undefined)
     ? JSON.stringify(json.continue) : null
   return { items, cursor: next }

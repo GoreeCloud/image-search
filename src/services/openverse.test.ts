@@ -31,4 +31,15 @@ describe('Openverse integration', () => {
     expect(second.cursor).toBe('3')
     expect(fetcher.mock.calls[1][0]).toContain('page=2')
   })
+  it('keeps healthy images beside malformed API rows and rejects bad envelopes', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [null, { ...entry, title: {} }, entry], page_count: 1 }),
+    })
+    vi.stubGlobal('fetch', fetcher)
+    const page = await searchOpenverse('sea', null)
+    expect(page.items.map(item => item.id)).toEqual(['openverse:abc'])
+    fetcher.mockResolvedValueOnce({ ok: true, json: async () => ({ results: {} }) })
+    await expect(searchOpenverse('sea', null)).rejects.toThrow('Invalid Openverse results')
+  })
 })
