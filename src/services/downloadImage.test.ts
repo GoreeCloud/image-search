@@ -59,7 +59,7 @@ describe('original image downloads', () => {
     })
     expect(await downloadOriginalImage(image)).toBe('Seaside Sunset.jpg')
     expect(fetch).toHaveBeenCalledWith(image.url, expect.objectContaining({
-      credentials: 'omit', mode: 'cors', referrerPolicy: 'no-referrer',
+      credentials: 'omit', mode: 'cors', redirect: 'error', referrerPolicy: 'no-referrer',
     }))
     expect(clickedHref).toBe('blob:https://app.example/image-123')
     expect(clickedName).toBe('Seaside Sunset.jpg')

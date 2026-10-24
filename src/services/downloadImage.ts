@@ -110,6 +110,9 @@ export async function downloadOriginalImage(image: Pick<ImageResult, 'url' | 'ti
   try {
     const response = await fetch(url, {
       mode: 'cors',
+      // A public URL may otherwise redirect the browser to a private host
+      // before CORS rejects the response. Fail closed on every redirect.
+      redirect: 'error',
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
       signal: controller.signal,
