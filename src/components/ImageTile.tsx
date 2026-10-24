@@ -18,6 +18,9 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, onRights, i
   const [imageUrl, setImageUrl] = useState(item.thumbnailUrl)
   const [failed, setFailed] = useState(false)
   const aspect = Math.min(1.65, Math.max(0.6, item.width / item.height))
+  const sourceBadge = item.provider.startsWith('Wikimedia Commons') ? 'Wikimedia'
+    : item.provider.startsWith('Openverse') ? 'Openverse'
+      : item.provider === 'NASA Image Library' ? 'NASA' : item.provider
 
   useEffect(() => {
     setImageUrl(item.thumbnailUrl)
@@ -51,7 +54,7 @@ export function ImageTile({ item, onOpen, onToggleSaved, onDownload, onRights, i
         </div>
       </button>
       <a className="tile-source" href={item.sourceUrl} target="_blank"
-        rel="noopener noreferrer" aria-label={`View ${item.title} on ${item.provider}`}>{failed ? 'View source' : item.provider} <ArrowUpRight size={12} /></a>
+        rel="noopener noreferrer" aria-label={`View ${item.title} on ${item.provider}`}>{failed ? 'View source' : sourceBadge} <ArrowUpRight size={12} /></a>
       <div className="tile-actions">
         <button type="button" className="tile-download" onClick={onDownload} disabled={downloadBusy}
           aria-label={isDownloading ? `Downloading ${item.title}` : `Download ${item.title}`}

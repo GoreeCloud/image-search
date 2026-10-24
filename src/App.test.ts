@@ -53,4 +53,8 @@ it('opens a functional filter panel and switches topics', () => {
   act(() => space.click())
   expect(space.getAttribute('aria-pressed')).toBe('true')
   expect(container.querySelector('.results-title h2')?.textContent).toBe('Explore space')
+
+  act(() => container.querySelector<HTMLButtonElement>('.brand')!.click())
+  expect(container.querySelector('.results-title h2')?.textContent).toBe('Explore')
+  expect(container.querySelector('.topic.active')?.textContent).toBe('All images')
 })

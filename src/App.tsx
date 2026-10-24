@@ -165,7 +165,7 @@ export default function App() {
     <div className={keyboardOpen ? "app-shell ime-open" : "app-shell"}>
       <header className="topbar">
         <div className="topbar-inner">
-          <button type="button" className="brand" onClick={() => { setView('explore'); setOrientation('all') }} aria-label="GoreeCloud Image Search home">
+          <button type="button" className="brand" onClick={() => { setView('explore'); setInput(''); setQuery(''); setActiveTopic('All images'); setSource('all'); setOrientation('all'); setDetailId(null) }} aria-label="GoreeCloud Image Search home">
             <span className="brand-mark"><img src="/app-icon.svg" alt="" /></span>
             <span className="brand-name"><small>GoreeCloud</small><strong>Image Search</strong></span>
           </button>
