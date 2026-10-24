@@ -70,12 +70,18 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             throw IllegalArgumentException("The image URL is invalid.")
         }
         val host = uri.host?.lowercase(Locale.ROOT) ?: ""
-        val unsafe = host.isEmpty() || host == "localhost" || host.endsWith(".localhost") ||
-            host.endsWith(".local") || host.startsWith("127.") || host.startsWith("10.") ||
+        // Validate again on every redirect; the WebView-side URL check is
+        // not a trust boundary for a native network request.
+        val localName = listOf(".localhost", ".local", ".localdomain", ".internal", ".lan")
+            .any { host.endsWith(it) } || host == "home.arpa" || host.endsWith(".home.arpa")
+        val unsafe = host.isEmpty() || host.endsWith(".") || !host.contains(".") ||
+            host == "localhost" || localName ||
+            host.startsWith("127.") || host.startsWith("10.") ||
             host.startsWith("192.168.") || host.startsWith("169.254.") ||
-            host.startsWith("172.") && host.split(".").getOrNull(1)?.toIntOrNull()?.let { it in 16..31 } == true ||
+            (host.startsWith("172.") && host.split(".").getOrNull(1)?.toIntOrNull()?.let { it in 16..31 } == true) ||
             host.all { it.isDigit() || it == '.' } || host.contains(":")
-        if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.userInfo != null || unsafe) {
+        if (uri.scheme?.lowercase(Locale.ROOT) != "https" || uri.userInfo != null ||
+            (uri.port != -1 && uri.port != 443) || unsafe) {
             throw IllegalArgumentException("Only public HTTPS image addresses can be downloaded.")
         }
         return uri.toURL()
