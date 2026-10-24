@@ -23,6 +23,8 @@ jobs:
         run: npm audit --audit-level=moderate
       - run: npm run typecheck
       - run: npm test
+      - name: Test manual provider CORS probe without network access
+        run: npm run test:provider-cors
       - run: npm run build
 
   linux:

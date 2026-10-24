@@ -32,8 +32,30 @@ npm ci
 npm run dev           # http://localhost:1420
 npm run typecheck
 npm test
+npm run test:provider-cors
 npm run build
 ```
+
+### Diagnose browser provider access
+
+For a **manual, read-only check** of the eight keyless providers' CORS response
+headers, from an approved network and with no user search terms or API keys:
+
+```bash
+npm run probe:provider-cors
+# Check another approved HTTPS app origin when its name is known:
+npm run probe:provider-cors -- --origin=https://YOUR-APP-ORIGIN.example
+```
+
+This sends one small, synthetic HTTPS GET per official provider, at most three
+concurrently, with a 12-second per-request timeout. It reads only response
+headers and reports `allowed`, `blocked`, `http-error`, `timeout`, or
+`network-error`. A nonzero exit indicates a provider needs review. The check
+does **not** bypass CORS, contact unapproved hosts, cache images, prove image
+loadability, or replace real-browser/Android/WebView acceptance. A successful
+HTTP 200 with no `Access-Control-Allow-Origin` is **blocked**, not usable by
+browser JavaScript. Europeana is excluded because it requires an optional
+user-provided API key; the probe never handles such credentials.
 
 ### Install the web app
 
@@ -74,6 +96,8 @@ No API keys are embedded in client code. Future commercial search providers shou
 - `src-tauri/android/MainActivity.kt`: Android native safe-area application; `scripts/prepare-android.sh` installs it into generated Gradle sources.
 - `src/hooks`: image search request lifecycle and local saved state, with separate first-page and load-more error handling.
 - `src/services/network.ts`: cancellable HTTP timeout helper shared by image providers.
+- `scripts/provider-cors.mjs` and `scripts/check-provider-cors.mjs`: bounded, manual
+  cross-origin API header qualification; its pure policy checks run in CI.
 - `src/components`: masonry tiles and lightbox.
 - `src/styles.css`: shared responsive, reduced-motion-aware styling.
 - `src-tauri`: minimal Rust shell with a restrictive content security policy.

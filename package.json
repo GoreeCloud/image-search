@@ -10,6 +10,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:provider-cors": "node scripts/provider-cors.node-test.mjs",
+    "probe:provider-cors": "node scripts/check-provider-cors.mjs",
     "tauri": "tauri",
     "lint": "tsc -b --pretty false"
   },
