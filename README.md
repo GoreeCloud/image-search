@@ -12,6 +12,7 @@ A GoreeCloud visual discovery app in development, with a **web/PWA interface** a
 - Download the original image file from individual results or image details when the provider permits cross-origin access. Download size is capped at 40 MB; filenames are sanitized. Provider restrictions, browser capabilities, and native WebView download handling can prevent direct downloads, so the original image/source links remain available as a fallback.
 - Save / unsave image bookmarks locally on-device (metadata and URLs only; this is separate from downloads). Copy original links, inspect creator, resolution and license.
 - Dark/light appearance, accessibility labels, keyboard shortcuts, focus-trapped image previews, reduced-motion support and touch-friendly layouts. Full GoreeCloud UI (GC UI) integration remains unverified.
+- On narrow mobile layouts, the filter trigger and the three image-action buttons retain the approved 38px visual size while exposing nonoverlapping 44px CSS touch targets. A source-level layout contract checks the 320px two-column constraint; physical-device hit testing and approved-mockup review remain pending.
 - Privacy-first: no login, no tracking, no analytics, no third-party JavaScript embeds.
 - Installable progressive web app (PWA) on supported browsers. Its app shell remains available offline; searching and remote images still require connectivity.
 - Request timeouts and non-destructive load-more retry handling protect the existing gallery if a provider is temporarily unavailable.
@@ -33,6 +34,7 @@ npm run dev           # http://localhost:1420
 npm run typecheck
 npm test
 npm run test:provider-cors
+npm run test:mobile-touch
 npm run build
 ```
 

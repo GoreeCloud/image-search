@@ -25,6 +25,8 @@ jobs:
       - run: npm test
       - name: Test manual provider CORS probe without network access
         run: npm run test:provider-cors
+      - name: Check mobile touch target CSS geometry
+        run: npm run test:mobile-touch
       - run: npm run build
 
   linux:

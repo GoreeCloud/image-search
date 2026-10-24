@@ -109,9 +109,11 @@
   .search-icon { width: 19px; height: 19px; margin-left: 17px; }
   .search-form input { padding-left: 12px; padding-right: 6px; font-size: 14px; letter-spacing: -.15px; }
   .search-submit { width: 44px; height: 44px; flex-basis: 44px; margin: 0 6px; display: none; }
-  .filter-trigger { position: absolute; right: 3px; top: 3px; width: 38px; height: 38px; border-radius: 16px; }
+  .filter-trigger { position: absolute; right: 3px; top: 3px; width: 38px; height: 38px; border-radius: 16px; overflow: visible; }
+  /* Preserve the approved 38px visual, but offer a full 44px touch hit area. */
+  .filter-trigger::after { content: ''; position: absolute; inset: -3px; }
   .filter-trigger svg { width: 21px; height: 21px; }
-  .search-form { padding-right: 42px; }
+  .search-form { padding-right: 44px; }
   .hero-filter-panel { padding: 13px; }
   .hero-filter-panel span { display: none; }
   .topics { margin-top: 6px; gap: 6px; padding: 1px 0 5px; }
@@ -129,8 +131,11 @@
   .tile { margin-bottom: 8px; border-radius: 13px; }
   .tile-image { border-radius: 13px; }
   .tile-source { top: 7px; left: 7px; padding: 5px 7px; max-width: calc(100% - 14px); font-size: 10.5px; }
-  .tile-actions { right: 7px; bottom: 7px; gap: 5px; }
-  .tile-actions button { width: 38px; height: 38px; border-radius: 12px; }
+  /* The 6px gap prevents adjacent expanded targets from overlapping. At a
+     320px viewport the three 44px hit areas still fit inside each 140px tile. */
+  .tile-actions { right: 7px; bottom: 7px; gap: 6px; }
+  .tile-actions button { position: relative; width: 38px; height: 38px; border-radius: 12px; overflow: visible; }
+  .tile-actions button::after { content: ''; position: absolute; inset: -3px; }
   .tile-actions button svg { width: 17px; height: 17px; }
   .tile-actions .tile-rights { font-size: 19px; }
   .tile-shade { display: block; }
