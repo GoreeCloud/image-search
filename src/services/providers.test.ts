@@ -29,6 +29,13 @@ const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thu
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
 })
+it('deduplicates identical originals from different providers without conflating distinct images', () => {
+  const commons = { ...image, id: 'commons:1', provider: 'Wikimedia Commons', url: 'https://images.example.org/shared.jpg' }
+  const openverse = { ...image, id: 'openverse:99', provider: 'Openverse', url: commons.url }
+  const nasa = { ...image, id: 'nasa:2', provider: 'NASA', url: 'https://images.example.org/other.jpg' }
+  expect(uniqueImages([commons, openverse, nasa])).toEqual([commons, nasa])
+  expect(uniqueImages([openverse, commons])).toEqual([openverse])
+})
 it('collects available providers when another provider fails', async () => {
   vi.mocked(searchOpenverse).mockResolvedValue({ items:[image], cursor:'2' })
   vi.mocked(searchCommons).mockRejectedValue(new Error('offline'))
