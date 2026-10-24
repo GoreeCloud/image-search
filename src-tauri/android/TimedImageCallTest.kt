@@ -1,14 +1,13 @@
 package com.goreecloud.imagesearch
 
-import com.sun.net.httpserver.HttpServer
 import java.io.ByteArrayOutputStream
 import java.io.InterruptedIOException
-import java.net.InetSocketAddress
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -17,42 +16,34 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Local JVM-only HTTP fixture; not an exception to Android's public-DNS rule. */
+/** Loopback-only JVM test server, never an exception to Android's public-DNS rule. */
 class TimedImageCallTest {
-    private lateinit var server: HttpServer
-    private lateinit var threads: ExecutorService
+    private lateinit var server: MockWebServer
     private val client = OkHttpClient.Builder()
         .readTimeout(5, TimeUnit.SECONDS)
         .retryOnConnectionFailure(false)
         .build()
 
     @Before fun startServer() {
-        server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        threads = Executors.newCachedThreadPool { work ->
-            Thread(work, "image-timeout-test").apply { isDaemon = true }
-        }
-        server.executor = threads
+        server = MockWebServer()
         server.start()
     }
 
     @After fun stopServer() {
-        server.stop(0)
-        threads.shutdownNow()
+        server.close()
     }
 
-    private fun request(path: String) = Request.Builder()
-        .url("http://127.0.0.1:${server.address.port}$path")
-        .build()
-
+    private fun request(path: String) = Request.Builder().url(server.url(path)).build()
     private fun nowMillis() = System.nanoTime() / 1_000_000L
 
     @Test fun ordinaryImageBodyCompletesBeforeDeadline() {
         val expected = ByteArray(2048) { (it % 251).toByte() }
-        server.createContext("/fast") { exchange ->
-            exchange.responseHeaders.add("Content-Type", "image/png")
-            exchange.sendResponseHeaders(200, expected.size.toLong())
-            exchange.responseBody.use { it.write(expected) }
-        }
+        server.enqueue(MockResponse.Builder()
+            .code(200)
+            .setHeader("Content-Type", "image/png")
+            .body(Buffer().write(expected))
+            .build()
+        )
         val started = nowMillis()
         executeTimedImageCall(client, request("/fast"), ImageDownloadDeadline(started, 3_000), started)
             .use { response ->
@@ -62,21 +53,15 @@ class TimedImageCallTest {
     }
 
     @Test fun aTricklingBodyTimesOutAndRollsBackItsPartialOutput() {
-        val chunk = ByteArray(128) { 0x35 }
-        server.createContext("/trickle") { exchange ->
-            exchange.responseHeaders.add("Content-Type", "image/png")
-            exchange.sendResponseHeaders(200, 4096)
-            try {
-                exchange.responseBody.use { stream ->
-                    stream.write(chunk)
-                    stream.flush()
-                    Thread.sleep(1_500)
-                    stream.write(ByteArray(4096 - chunk.size))
-                }
-            } catch (_: Exception) {
-                // Expected when OkHttp cancels the call or JUnit tears down server.
-            }
-        }
+        // Deliver the first 128 bytes immediately, then stall the next block.
+        // The real OkHttp Call.timeout must interrupt the body, not just headers.
+        server.enqueue(MockResponse.Builder()
+            .code(200)
+            .setHeader("Content-Type", "image/png")
+            .body(Buffer().write(ByteArray(4096) { 0x35 }))
+            .throttleBody(128, 1_500, TimeUnit.MILLISECONDS)
+            .build()
+        )
         val started = nowMillis()
         val response = executeTimedImageCall(
             client, request("/trickle"), ImageDownloadDeadline(started, 350), started
@@ -120,5 +105,6 @@ class TimedImageCallTest {
             executeTimedImageCall(client, request("/unused"),
                 ImageDownloadDeadline(started, 50), started + 51)
         }
+        assertEquals(0, server.requestCount)
     }
 }

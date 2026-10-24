@@ -29,7 +29,7 @@ printf 'Applied native Downloads plugin, public DNS pinning, deadline, concurren
 gradle_file="src-tauri/gen/android/app/build.gradle.kts"
 test -f "$gradle_file"
 if ! grep -Fq 'com.squareup.okhttp3:okhttp:5.3.0' "$gradle_file"; then
-  printf '\n// GoreeCloud native image downloads: validated, pinned DNS destinations.\ndependencies {\n    implementation("com.squareup.okhttp3:okhttp:5.3.0")\n    testImplementation("junit:junit:4.13.2")\n}\n' >> "$gradle_file"
+  printf '\n// GoreeCloud native image downloads: validated, pinned DNS destinations.\ndependencies {\n    implementation("com.squareup.okhttp3:okhttp:5.3.0")\n    testImplementation("junit:junit:4.13.2")\n    testImplementation("com.squareup.okhttp3:mockwebserver3:5.3.0")\n}\n' >> "$gradle_file"
 fi
 test_root="src-tauri/gen/android/app/src/test/java/com/goreecloud/imagesearch"
 mkdir -p "$test_root"
