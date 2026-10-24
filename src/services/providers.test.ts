@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { uniqueImages, searchAllSources } from './providers'
+import { uniqueImages, interleaveImagePages, searchAllSources } from './providers'
 import { searchOpenverse } from './openverse'
 import { searchCommons } from './commons'
 import { searchLoC } from './loc'
@@ -29,6 +29,44 @@ const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thu
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
 })
+it('deduplicates identical originals from different providers without conflating distinct images', () => {
+  const commons = { ...image, id: 'commons:1', provider: 'Wikimedia Commons', url: 'https://images.example.org/shared.jpg' }
+  const openverse = { ...image, id: 'openverse:99', provider: 'Openverse', url: commons.url }
+  const nasa = { ...image, id: 'nasa:2', provider: 'NASA', url: 'https://images.example.org/other.jpg' }
+  expect(uniqueImages([commons, openverse, nasa])).toEqual([commons, nasa])
+  expect(uniqueImages([openverse, commons])).toEqual([openverse])
+})
+
+it('weaves uneven source pages without changing per-source ranking and then deduplicates', () => {
+  const openFirst = {...image, id:'open:1'}
+  const openSecond = {...image, id:'open:2'}
+  const commonsFirst = {...image, id:'commons:1'}
+  const commonsSecond = {...image, id:'commons:2'}
+  const woven = interleaveImagePages([[openFirst, openSecond], [commonsFirst, commonsSecond, openFirst], []])
+  expect(woven.map(item => item.id)).toEqual(['open:1','commons:1','open:2','commons:2','open:1'])
+  expect(uniqueImages(woven).map(item => item.id)).toEqual(['open:1','commons:1','open:2','commons:2'])
+})
+
+it('alternates actual provider search pages and preserves their independent next-page cursors', async () => {
+  for (const mock of [searchLoC, searchNasa, searchCma, searchMet]) {
+    vi.mocked(mock).mockResolvedValue({items:[],cursor:null})
+  }
+  vi.mocked(searchOpenverse)
+    .mockResolvedValueOnce({items:[{...image,id:'open:1'},{...image,id:'open:2'}],cursor:'open-next'})
+    .mockResolvedValue({items:[{...image,id:'open:3'}],cursor:null})
+  vi.mocked(searchCommons)
+    .mockResolvedValueOnce({items:[{...image,id:'commons:1'},{...image,id:'commons:2'}],cursor:'commons-next'})
+    .mockResolvedValue({items:[{...image,id:'commons:3'}],cursor:null})
+  const first = await searchAllSources('nature', null)
+  expect(first.items.map(item => item.id)).toEqual(['open:1','commons:1','open:2','commons:2'])
+  expect(JSON.parse(first.cursor!)).toMatchObject({openverse:'open-next',commons:'commons-next'})
+  const second = await searchAllSources('nature',first.cursor)
+  expect(second.items.map(item => item.id)).toEqual(['open:3','commons:3'])
+  expect(second.cursor).toBeNull()
+  expect(searchOpenverse).toHaveBeenLastCalledWith('nature','open-next',undefined)
+  expect(searchCommons).toHaveBeenLastCalledWith('nature','commons-next',undefined)
+})
+
 it('collects available providers when another provider fails', async () => {
   vi.mocked(searchOpenverse).mockResolvedValue({ items:[image], cursor:'2' })
   vi.mocked(searchCommons).mockRejectedValue(new Error('offline'))
