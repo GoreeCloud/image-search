@@ -38,6 +38,7 @@ class ImageSaveArgs {
 class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
     companion object {
         private const val MAX_BYTES = 40L * 1024 * 1024
+        private val downloadGate = NativeDownloadGate(2)
         private val formats = mapOf(
             "image/jpeg" to "jpg",
             "image/png" to "png",
@@ -72,16 +73,29 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.reject("The image download request was invalid.")
             return
         }
-        Thread({
-            try {
-                val name = saveToDownloads(args.url, args.title)
-                val result = JSObject()
-                result.put("filename", name)
-                invoke.resolve(result)
-            } catch (error: Exception) {
-                invoke.reject(error.message ?: "Could not save this image to Downloads.")
-            }
-        }, "goreecloud-image-download").start()
+        // A fast sequence of save taps must not allocate unlimited threads,
+        // simultaneous streams or pending MediaStore entries.
+        if (!downloadGate.tryAcquire()) {
+            invoke.reject("Two image downloads are already running. Please try again shortly.")
+            return
+        }
+        try {
+            Thread({
+                try {
+                    val name = saveToDownloads(args.url, args.title)
+                    val result = JSObject()
+                    result.put("filename", name)
+                    invoke.resolve(result)
+                } catch (error: Exception) {
+                    invoke.reject(error.message ?: "Could not save this image to Downloads.")
+                } finally {
+                    downloadGate.release()
+                }
+            }, "goreecloud-image-download").start()
+        } catch (_: Exception) {
+            downloadGate.release()
+            invoke.reject("Android could not start the image download.")
+        }
     }
 
     private fun validateUrl(address: String): URL {

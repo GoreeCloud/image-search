@@ -19,7 +19,8 @@ test -f src-tauri/android/ImageDownloadPlugin.kt
 cp src-tauri/android/ImageDownloadPlugin.kt "$(dirname "${activities[0]}")/ImageDownloadPlugin.kt"
 cp src-tauri/android/PublicImageDns.kt "$(dirname "${activities[0]}")/PublicImageDns.kt"
 cp src-tauri/android/ImageDownloadDeadline.kt "$(dirname "${activities[0]}")/ImageDownloadDeadline.kt"
-printf 'Applied native Android Downloads plugin, public-only DNS resolver, and total deadline\n'
+cp src-tauri/android/NativeDownloadGate.kt "$(dirname "${activities[0]}")/NativeDownloadGate.kt"
+printf 'Applied native Downloads plugin, public DNS pinning, deadline, and concurrency gate\n'
 
 # Generated Android sources are intentionally not checked into Git. Add the
 # networking dependency and native JVM regression suite on every CI/QA init.
@@ -32,7 +33,8 @@ test_root="src-tauri/gen/android/app/src/test/java/com/goreecloud/imagesearch"
 mkdir -p "$test_root"
 cp src-tauri/android/PublicImageDnsTest.kt "$test_root/PublicImageDnsTest.kt"
 cp src-tauri/android/ImageDownloadDeadlineTest.kt "$test_root/ImageDownloadDeadlineTest.kt"
-printf 'Installed native DNS policy and download deadline regression tests\n'
+cp src-tauri/android/NativeDownloadGateTest.kt "$test_root/NativeDownloadGateTest.kt"
+printf 'Installed native DNS, deadline, and concurrency regression tests\n'
 
 # System-bar appearance is a separate native plugin with the same stable namespace.
 test -f src-tauri/android/ThemeBarsPlugin.kt
