@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.os.Build
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.MediaStore
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
@@ -11,6 +12,7 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
+import java.io.InterruptedIOException
 import java.net.Proxy
 import java.net.URI
 import java.net.URL
@@ -104,7 +106,7 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
         return uri.toURL()
     }
 
-    private fun openImage(original: String): Pair<Response, String> {
+    private fun openImage(original: String, deadline: ImageDownloadDeadline): Pair<Response, String> {
         var current = validateUrl(original)
         repeat(5) {
             // The HTTP client uses only DNS answers approved in PublicImageDns.
@@ -114,7 +116,13 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
                 .header("Accept", "image/avif,image/webp,image/*")
                 .get()
                 .build()
-            val response = imageClient.newCall(request).execute()
+            // OkHttp's Call.timeout covers DNS, TLS, and streamed body reads.
+            // Budget remaining time per hop so manual redirects cannot reset it.
+            val remaining = deadline.remainingMillis(SystemClock.elapsedRealtime())
+            if (remaining == 0L) throw InterruptedIOException("Image download timed out.")
+            val call = imageClient.newCall(request)
+            call.timeout().timeout(remaining, TimeUnit.MILLISECONDS)
+            val response = call.execute()
             try {
                 val status = response.code
                 if (status in 300..399) {
@@ -160,7 +168,8 @@ class ImageDownloadPlugin(private val activity: Activity) : Plugin(activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             throw IllegalStateException("Saving to Downloads requires Android 10 or newer.")
         }
-        val (connection, mime) = openImage(original)
+        val deadline = ImageDownloadDeadline(SystemClock.elapsedRealtime())
+        val (connection, mime) = openImage(original, deadline)
         val filename = safeFilename(title, mime)
         val resolver = activity.contentResolver
         val values = ContentValues().apply {
