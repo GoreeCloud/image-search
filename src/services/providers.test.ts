@@ -29,6 +29,31 @@ const image = {id:'example', title:'Example',url:'https://example.com/a.jpg',thu
 it('deduplicates repeated IDs while keeping their initial order', () => {
   expect(uniqueImages([image,{...image,title:'second'}])).toEqual([image])
 })
+it('merges cross-provider duplicates with the same original despite tracking parameters and fragments', () => {
+  const openverse = { ...image, id: 'openverse:photo', provider: 'Openverse',
+    url: 'https://images.example.net/flower.jpg?utm_source=search&size=large#preview',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Flower.jpg?utm_campaign=gallery' }
+  const commons = { ...image, id: 'commons:photo', provider: 'Wikimedia Commons',
+    url: 'https://images.example.net/flower.jpg?size=large',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Flower.jpg' }
+  const distinct = { ...commons, id: 'commons:second', url: 'https://images.example.net/other.jpg',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:Other.jpg' }
+  expect(uniqueImages([openverse, commons, distinct]).map(item => item.id)).toEqual([
+    'openverse:photo', 'commons:second',
+  ])
+})
+it('preserves separate images from one collection page and significant media parameters', () => {
+  const first = { ...image, id: 'museum:1', provider: 'Museum',
+    url: 'https://images.example.net/asset?id=1', sourceUrl: 'https://museum.example.net/collection' }
+  const second = { ...first, id: 'museum:2', url: 'https://images.example.net/asset?id=2' }
+  const third = { ...second, id: 'openverse:3', provider: 'Openverse',
+    sourceUrl: 'https://museum.example.net/image/3' }
+  const other = { ...third, id: 'openverse:4', url: 'https://images.example.net/asset?id=4',
+    sourceUrl: 'https://museum.example.net/collection' }
+  expect(uniqueImages([first, second, third, other]).map(item => item.id)).toEqual([
+    'museum:1', 'museum:2', 'openverse:4',
+  ])
+})
 it('collects available providers when another provider fails', async () => {
   vi.mocked(searchOpenverse).mockResolvedValue({ items:[image], cursor:'2' })
   vi.mocked(searchCommons).mockRejectedValue(new Error('offline'))

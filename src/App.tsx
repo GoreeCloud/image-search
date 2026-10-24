@@ -36,6 +36,7 @@ const ORIENTATIONS: { value: Orientation; label: string }[] = [
   { value: 'portrait', label: 'Portrait' },
   { value: 'square', label: 'Square' },
 ]
+const IMAGE_BATCH_SIZE = 48
 
 function isOrientation(image: ImageResult, orientation: Orientation) {
   if (orientation !== 'all' && image.dimensionsKnown === false) return false
@@ -58,6 +59,7 @@ export default function App() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [refresh, setRefresh] = useState(0)
   const [source, setSource] = useState<ImageSource>('all')
+  const [displayLimit, setDisplayLimit] = useState(IMAGE_BATCH_SIZE)
   const keyboardOpen = useSoftwareKeyboard()
   const [theme, setTheme] = useThemeMode()
   const searchRef = useRef<HTMLInputElement>(null)
@@ -67,18 +69,30 @@ export default function App() {
   const collectionLimitedQuery = source === 'all' && isModernTechnologyQuery(query)
   const { saved, isSaved, toggleSaved, storageError } = useSavedImages()
   const visible = useMemo(() => (view === 'saved' ? saved : images).filter((item) => isOrientation(item, orientation)), [view, saved, images, orientation])
-  const currentIndex = visible.findIndex((item) => item.id === detailId)
-  const selected = currentIndex >= 0 ? visible[currentIndex] : null
+  const moreToReveal = view === 'explore' && visible.length > displayLimit
+  const displayed = view === 'explore' ? visible.slice(0, displayLimit) : visible
+  const currentIndex = displayed.findIndex((item) => item.id === detailId)
+  const selected = currentIndex >= 0 ? displayed[currentIndex] : null
+
+  useEffect(() => setDisplayLimit(IMAGE_BATCH_SIZE), [query, refresh, source, orientation])
+
+  const showMore = useCallback(() => {
+    if (moreToReveal) setDisplayLimit((current) => current + IMAGE_BATCH_SIZE)
+    else void loadMore()
+  }, [moreToReveal, loadMore])
 
   useEffect(() => {
     const node = sentinel.current
     // If providers are down, pause background pagination. Only an explicit
     // click on Explore more should retry the failed sources.
-    if (!node || view !== 'explore' || !hasMore || error || loadMoreError || loading || unavailableSources.length) return
-    const observer = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) void loadMore() }, { rootMargin: '800px' })
+    if (!node || view !== 'explore' || loading || !('IntersectionObserver' in window)) return
+    // Reveal already fetched items before requesting another provider page.
+    // A failed provider must not hide images that have already loaded.
+    if (!moreToReveal && (!hasMore || error || loadMoreError || unavailableSources.length)) return
+    const observer = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) showMore() }, { rootMargin: '800px' })
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loadMore, view, hasMore, error, loadMoreError, loading, unavailableSources])
+  }, [showMore, moreToReveal, view, hasMore, error, loadMoreError, loading, unavailableSources])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -128,16 +142,16 @@ export default function App() {
   const closeDetail = useCallback(() => setDetailId(null), [])
   const nextDetail = useCallback(() => {
     setDetailId((id) => {
-      const index = visible.findIndex((item) => item.id === id)
-      return visible.length ? visible[(index + 1) % visible.length].id : null
+      const index = displayed.findIndex((item) => item.id === id)
+      return displayed.length ? displayed[(index + 1) % displayed.length].id : null
     })
-  }, [visible])
+  }, [displayed])
   const previousDetail = useCallback(() => {
     setDetailId((id) => {
-      const index = visible.findIndex((item) => item.id === id)
-      return visible.length ? visible[(index - 1 + visible.length) % visible.length].id : null
+      const index = displayed.findIndex((item) => item.id === id)
+      return displayed.length ? displayed[(index - 1 + displayed.length) % displayed.length].id : null
     })
-  }, [visible])
+  }, [displayed])
 
   async function startImageDownload(image: ImageResult) {
     if (downloadingId !== null) return
@@ -209,9 +223,9 @@ export default function App() {
         <div className="results-toolbar">
           <div className="results-title">
             <h2>{view === 'saved' ? 'Saved' : activeTopic === 'All images' ? 'Explore' : activeTopic ? `Explore ${activeTopic.toLowerCase()}` : `Results for “${query.trim()}”`}</h2>
-            <span>{loading && view === 'explore' ? 'Searching…' : `${visible.length} images${view === 'explore' && hasMore ? ' · more to explore' : ''}`}</span>
-            {view === 'explore' && !loading && !error && hasMore && <button type="button" className="quick-more" disabled={loadingMore} onClick={() => void loadMore()}>
-              {loadingMore ? 'Loading…' : 'Show more images'} <ArrowDown size={14} />
+            <span>{loading && view === 'explore' ? 'Searching…' : `${displayed.length}${moreToReveal ? ` of ${visible.length}` : ''} images${view === 'explore' && (moreToReveal || hasMore) ? ' · more to explore' : ''}`}</span>
+            {view === 'explore' && !loading && !error && (moreToReveal || hasMore) && <button type="button" className="quick-more" disabled={loadingMore && !moreToReveal} onClick={showMore}>
+              {loadingMore && !moreToReveal ? 'Loading…' : 'Show more images'} <ArrowDown size={14} />
             </button>}
           </div>
           <div className="toolbar-filters">
@@ -243,8 +257,8 @@ export default function App() {
 
         {(loading && view === 'explore') ? <div className="masonry skeleton-grid" aria-label="Loading images">
           {Array.from({length: 20}, (_, i) => <div key={i} className="skeleton" style={{aspectRatio: String([0.72, 1.25, 0.86, 1.05, 0.65][i % 5])}} />)}
-        </div> : visible.length > 0 ? <div className="masonry">
-          {visible.map((item) => <ImageTile key={item.id} item={item} isSaved={isSaved(item.id)}
+        </div> : displayed.length > 0 ? <div className="masonry">
+          {displayed.map((item) => <ImageTile key={item.id} item={item} isSaved={isSaved(item.id)}
             onOpen={() => setDetailId(item.id)}
             onDownload={() => void startImageDownload(item)}
             isDownloading={downloadingId === item.id}
@@ -263,8 +277,8 @@ export default function App() {
           <span>Couldn't load the next page. {loadMoreError}</span>
           <button type="button" onClick={() => void loadMore()}><RotateCcw size={15}/> Retry</button>
         </div>}
-        {view === 'explore' && !loading && !error && hasMore && <div className="load-row">
-          <button type="button" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? 'Finding more images…' : 'Explore more'} <ArrowDown size={16} /></button>
+        {view === 'explore' && !loading && !error && (moreToReveal || hasMore) && <div className="load-row">
+          <button type="button" disabled={loadingMore && !moreToReveal} onClick={showMore}>{loadingMore && !moreToReveal ? 'Finding more images…' : 'Explore more'} <ArrowDown size={16} /></button>
         </div>}
         <footer className="page-footer"><span>Image Search <span className="footer-dot">✦</span> Made with care by GoreeCloud</span><span>Images belong to their respective creators. Check licensing before reuse.</span></footer>
         </>}
