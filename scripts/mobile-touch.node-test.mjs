@@ -4,6 +4,18 @@ import { readFileSync } from 'node:fs'
 
 const css = readFileSync(new URL('../src/discovery.css', import.meta.url), 'utf8')
 
+// At 393 CSS pixels, “Results for mountain” and a museum source exceed one row.
+// The toolbar must wrap while headings remain breakable for narrower screens.
+describe('mobile search-results toolbar', () => {
+  it('wraps lengthy headings and source names without overlapping them', () => {
+    const mobile = css.slice(css.indexOf('@media (max-width: 680px)'))
+    assert.match(mobile, /\.results-toolbar\s*\{[^}]*flex-wrap:\s*wrap;/)
+    assert.match(mobile, /\.results-title\s*\{[^}]*max-width:\s*100%;/)
+    assert.match(mobile, /\.results-title h2\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/)
+    assert.match(mobile, /\.toolbar-filters\s*\{[^}]*flex:\s*0 0 auto;/)
+  })
+})
+
 describe('mobile mockup touch-area contract', () => {
   it('expands filter and image-action taps without enlarging the approved visible buttons', () => {
     assert.match(css, /\.filter-trigger\s*\{[^}]*width:\s*38px;\s*height:\s*38px;/)

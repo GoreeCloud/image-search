@@ -118,12 +118,13 @@
   .hero-filter-panel span { display: none; }
   .topics { margin-top: 6px; gap: 6px; padding: 1px 0 5px; }
   .topic { min-width: 0; padding: 7px 11px; font-size: 12px; line-height: 1.25; white-space: nowrap; }
-  .results-toolbar { margin: 11px 6px 7px; display: flex; align-items: center; flex-direction: row; gap: 5px; }
-  .results-title { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; min-width: 0; }
-  .results-title h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.6px; white-space: nowrap; }
+  /* Long result headings and localized source names must never share the same pixels. */
+  .results-toolbar { margin: 11px 6px 7px; display: flex; align-items: center; flex-direction: row; flex-wrap: wrap; gap: 5px; }
+  .results-title { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; }
+  .results-title h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.6px; white-space: normal; overflow-wrap: anywhere; }
   .results-title > span { display: none; }
   .quick-more { display: none; }
-  .toolbar-filters { margin-left: auto; }
+  .toolbar-filters { margin-left: auto; flex: 0 0 auto; }
   .filter-wrap.source-filter { gap: 2px; padding: 0; }
   .source-filter select { max-width: 150px; font-size: 12px; line-height: 1.2; padding: 9px 0; }
   .source-filter svg { width: 17px; }
